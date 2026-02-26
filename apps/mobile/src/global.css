@@ -1,6 +1,7 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css";
+
 @import "nativewind/theme";
 
 @theme {
@@ -23,26 +24,22 @@
   --color-text-secondary: #94A3C8;
   --color-text-muted: #5E6F94;
   --color-text-dim: #3A4A6B;
-}
 
-/* Light mode overrides */
-@media (prefers-color-scheme: light) {
-  @theme {
-    --color-wolf-blue: #0882B8;
-    --color-wolf-deep: #065E87;
-    --color-wolf-glow: #B8E6FA;
-    --color-wolf-ice: #E0F4FD;
-    --color-wolf-purple: #805ad5;
-    --color-hunt-orange: #dd6b20;
-    --color-den-green: #38a169;
+  /* Light mode tokens (applied via NativeWind dark: variant at runtime) */
+  --color-wolf-blue-light: #0882B8;
+  --color-wolf-deep-light: #065E87;
+  --color-wolf-glow-light: #B8E6FA;
+  --color-wolf-ice-light: #E0F4FD;
+  --color-wolf-purple-light: #805ad5;
+  --color-hunt-orange-light: #dd6b20;
+  --color-den-green-light: #38a169;
 
-    --color-bg-dark: #F4F8FC;
-    --color-bg-card: #FFFFFF;
-    --color-bg-surface: #EAF0F7;
+  --color-bg-dark-light: #F4F8FC;
+  --color-bg-card-light: #FFFFFF;
+  --color-bg-surface-light: #EAF0F7;
 
-    --color-text-primary: #091533;
-    --color-text-secondary: #3A4A6B;
-    --color-text-muted: #94A3C8;
-    --color-text-dim: #C2CDDE;
-  }
+  --color-text-primary-light: #091533;
+  --color-text-secondary-light: #3A4A6B;
+  --color-text-muted-light: #94A3C8;
+  --color-text-dim-light: #C2CDDE;
 }

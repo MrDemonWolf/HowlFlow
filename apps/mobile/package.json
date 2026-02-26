@@ -1,13 +1,19 @@
 {
-  "name": "mobile",
+  "name": "howlflow",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "dev": "expo start",
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "dev": "expo start --dev-client",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
+    "run:ios": "expo run:ios",
+    "run:ios:device": "expo run:ios --device",
+    "run:android": "expo run:android",
+    "prebuild": "expo prebuild",
+    "prebuild:clean": "expo prebuild --clean",
+    "install:package": "expo install",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint"
   },
@@ -53,6 +59,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/react": "~19.2.2",
+    "lightningcss": "1.30.1",
     "postcss": "^8.5.0",
     "tailwindcss": "^4.0.0",
     "typescript": "~5.9.2"

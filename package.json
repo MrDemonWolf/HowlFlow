@@ -7,10 +7,22 @@
     "build": "turbo build",
     "dev:mobile": "turbo -F mobile dev",
     "dev:docs": "turbo -F docs dev",
+    "ios": "pnpm -F mobile ios",
+    "android": "pnpm -F mobile android",
+    "run:ios": "pnpm -F mobile run:ios",
+    "run:ios:device": "pnpm -F mobile run:ios:device",
+    "run:android": "pnpm -F mobile run:android",
+    "prebuild": "pnpm -F mobile prebuild",
+    "prebuild:clean": "pnpm -F mobile prebuild:clean",
     "typecheck": "turbo typecheck",
     "lint": "turbo lint"
   },
   "devDependencies": {
     "turbo": "^2"
+  },
+  "pnpm": {
+    "overrides": {
+      "lightningcss": "1.30.1"
+    }
   }
 }

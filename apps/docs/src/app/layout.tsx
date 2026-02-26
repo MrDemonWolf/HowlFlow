@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: "HowlFlow — ADHD Daily Companion",
   description:
     "Your wolf-themed ADHD daily companion. Block your time, focus your hunt, dump your thoughts, celebrate your wins.",
+  icons: {
+    icon: [
+      { url: "/howlflow/icon.svg", type: "image/svg+xml" },
+      { url: "/howlflow/icon.png", type: "image/png" },
+    ],
+    apple: "/howlflow/icon.png",
+  },
 };
 
 export default function RootLayout({

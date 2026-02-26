@@ -9,12 +9,14 @@ interface TimerState {
   durationSeconds: number;
   remainingSeconds: number;
   currentBlockId: string | null;
+  pendingNotificationId: string | null;
   startTimer: (durationSeconds: number, blockId?: string) => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
   resetTimer: () => void;
   tick: () => void;
   completeTimer: () => void;
+  setPendingNotificationId: (id: string | null) => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -24,6 +26,7 @@ export const useTimerStore = create<TimerState>()(
       durationSeconds: 0,
       remainingSeconds: 0,
       currentBlockId: null,
+      pendingNotificationId: null,
       startTimer: (durationSeconds, blockId) =>
         set({
           status: "running",
@@ -39,6 +42,7 @@ export const useTimerStore = create<TimerState>()(
           durationSeconds: 0,
           remainingSeconds: 0,
           currentBlockId: null,
+          pendingNotificationId: null,
         }),
       tick: () =>
         set((state) => {
@@ -53,7 +57,9 @@ export const useTimerStore = create<TimerState>()(
           durationSeconds: 0,
           remainingSeconds: 0,
           currentBlockId: null,
+          pendingNotificationId: null,
         }),
+      setPendingNotificationId: (id) => set({ pendingNotificationId: id }),
     }),
     {
       name: "timer-storage",

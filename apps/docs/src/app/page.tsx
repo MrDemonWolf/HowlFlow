@@ -1,6 +1,14 @@
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/howlflow/icon.svg"
+        alt="HowlFlow logo"
+        width={96}
+        height={96}
+        className="mb-6"
+      />
       <h1 className="text-5xl font-bold text-wolf-blue mb-4 tracking-tight">
         HowlFlow
       </h1>

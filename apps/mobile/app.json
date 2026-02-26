@@ -2,6 +2,7 @@
   "expo": {
     "name": "HowlFlow",
     "slug": "howlflow",
+    "owner": "mrdemonwolf-org",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,12 +10,17 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.mrdemonwolf.howlflow",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/AppIcon.icon",
+      "infoPlist": {
+        "NSMotionUsageDescription": "HowlFlow uses haptic feedback for task completion and timer events."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0a0f1e"
-      }
+      },
+      "package": "com.mrdemonwolf.howlflow"
     },
     "web": {
       "output": "static",
@@ -27,11 +33,22 @@
         {
           "backgroundColor": "#0a0f1e"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "FILL_IN_AFTER_EAS_INIT"
+      }
     }
   }
 }
