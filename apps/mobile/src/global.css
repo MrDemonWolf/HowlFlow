@@ -1,0 +1,48 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+@theme {
+  /* Wolf Theme - Primary Palette (built from #0FACED + #091533) */
+  --color-wolf-blue: #0FACED;
+  --color-wolf-deep: #0882B8;
+  --color-wolf-glow: #5DC8F5;
+  --color-wolf-ice: #A3E0FA;
+  --color-wolf-purple: #b794f4;
+  --color-hunt-orange: #fc814a;
+  --color-den-green: #68d391;
+
+  /* Backgrounds */
+  --color-bg-dark: #091533;
+  --color-bg-card: #0F1F45;
+  --color-bg-surface: #0C1A3B;
+
+  /* Text */
+  --color-text-primary: #E8F0FE;
+  --color-text-secondary: #94A3C8;
+  --color-text-muted: #5E6F94;
+  --color-text-dim: #3A4A6B;
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  @theme {
+    --color-wolf-blue: #0882B8;
+    --color-wolf-deep: #065E87;
+    --color-wolf-glow: #B8E6FA;
+    --color-wolf-ice: #E0F4FD;
+    --color-wolf-purple: #805ad5;
+    --color-hunt-orange: #dd6b20;
+    --color-den-green: #38a169;
+
+    --color-bg-dark: #F4F8FC;
+    --color-bg-card: #FFFFFF;
+    --color-bg-surface: #EAF0F7;
+
+    --color-text-primary: #091533;
+    --color-text-secondary: #3A4A6B;
+    --color-text-muted: #94A3C8;
+    --color-text-dim: #C2CDDE;
+  }
+}

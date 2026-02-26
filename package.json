@@ -1,0 +1,16 @@
+{
+  "name": "howlflow",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "dev:mobile": "turbo -F mobile dev",
+    "dev:docs": "turbo -F docs dev",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  }
+}
