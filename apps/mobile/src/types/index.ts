@@ -8,15 +8,18 @@ export type BlockType =
 
 export interface SubTask {
   id: string;
-  title: string;
-  completed: boolean;
+  text: string;
+  done: boolean;
+  completedAt?: string;
 }
 
 export interface BlockTemplate {
   id: string;
-  title: string;
+  label: string;
+  emoji: string;
   type: BlockType;
-  durationMinutes: number;
+  duration: number;
+  time: string;
   defaultTasks: string[];
   sortOrder: number;
   createdAt: string;
@@ -27,29 +30,31 @@ export interface DailyBlock {
   id: string;
   templateId: string;
   date: string;
-  title: string;
+  label: string;
+  emoji: string;
   type: BlockType;
-  durationMinutes: number;
-  startTime: string | null;
+  duration: number;
+  time: string | null;
   tasks: SubTask[];
-  completed: boolean;
+  done: boolean;
+  completedAt?: string;
   sortOrder: number;
 }
 
 export interface BrainDump {
   id: string;
-  text: string;
+  content: string;
   createdAt: string;
   archived: boolean;
-  archivedAt: string | null;
 }
 
 export interface FocusSession {
   id: string;
-  blockId: string | null;
+  blockId?: string;
   durationSeconds: number;
-  completedAt: string;
-  date: string;
+  completed: boolean;
+  startedAt: string;
+  endedAt?: string;
 }
 
 export interface UserStats {
@@ -58,16 +63,17 @@ export interface UserStats {
   lastActiveDate: string | null;
   totalFocusMinutes: number;
   totalBlocksCompleted: number;
-  totalTasksCompleted: number;
 }
 
 export interface UserSettings {
   wakeUpTime: string;
   windDownTime: string;
-  focusDurationMinutes: number;
-  shortBreakMinutes: number;
-  longBreakMinutes: number;
+  pomodoroWorkMinutes: number;
+  pomodoroBreakMinutes: number;
+  notifyMinutesBefore: number;
+  morningReminderTime: string;
   notificationsEnabled: boolean;
   hapticsEnabled: boolean;
   iCloudSyncEnabled: boolean;
+  wolfQuotesEnabled: boolean;
 }

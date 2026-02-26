@@ -28,15 +28,19 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useLayoutEffect } from "react";
-import { Slot } from "expo-router";
-import { Appearance, useColorScheme } from "react-native";
+import { Stack } from "expo-router";
+import { Appearance, AppState, useColorScheme } from "react-native";
 import { colorScheme as nativewindColorScheme } from "react-native-css";
 import {
   configureNotificationHandler,
   requestNotificationPermissions,
   cancelAllTimerNotifications,
+  scheduleDailyBlockNotifications,
+  scheduleMorningReminder,
 } from "@/lib/notifications";
+import { getToday } from "@/lib/dates";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useScheduleStore } from "@/stores/scheduleStore";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -72,19 +76,62 @@ export default function RootLayout() {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
 
-      // Bootstrap notifications (fire-and-forget, non-blocking)
+      // Bootstrap notifications
       try {
         configureNotificationHandler();
-        const { notificationsEnabled } = useSettingsStore.getState();
-        if (notificationsEnabled) {
+        const settings = useSettingsStore.getState();
+        if (settings.notificationsEnabled) {
           requestNotificationPermissions();
+          scheduleMorningReminder(settings.morningReminderTime);
         }
         cancelAllTimerNotifications();
       } catch {
         // Notifications may not be available in all environments
       }
+
+      // Generate today's blocks on cold start
+      const today = getToday();
+      useScheduleStore.getState().generateDailyBlocks(today);
+      useScheduleStore.getState().cleanOldData(30);
+
+      // Schedule block notifications
+      const blocks = useScheduleStore.getState().dailyBlocks[today];
+      if (blocks?.length) {
+        const { notifyMinutesBefore, notificationsEnabled } =
+          useSettingsStore.getState();
+        if (notificationsEnabled) {
+          scheduleDailyBlockNotifications(blocks, notifyMinutesBefore);
+        }
+      }
     }
   }, [fontsLoaded]);
+
+  // Day transition: re-generate blocks when app comes to foreground on a new day
+  useEffect(() => {
+    let lastDate = getToday();
+
+    const sub = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        const now = getToday();
+        if (now !== lastDate) {
+          lastDate = now;
+          useScheduleStore.getState().generateDailyBlocks(now);
+
+          // Re-schedule block notifications for the new day
+          const blocks = useScheduleStore.getState().dailyBlocks[now];
+          const settings = useSettingsStore.getState();
+          if (blocks?.length && settings.notificationsEnabled) {
+            scheduleDailyBlockNotifications(
+              blocks,
+              settings.notifyMinutesBefore
+            );
+          }
+        }
+      }
+    });
+
+    return () => sub.remove();
+  }, []);
 
   if (!fontsLoaded) {
     return null;
@@ -92,7 +139,24 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Slot />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor:
+              colorScheme === "dark" ? "#091533" : "#F4F8FC",
+          },
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="settings"
+          options={{
+            headerShown: true,
+            presentation: "modal",
+          }}
+        />
+      </Stack>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
   );

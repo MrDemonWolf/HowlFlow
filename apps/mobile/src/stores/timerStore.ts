@@ -1,69 +1,72 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import { zustandStorage } from "@/lib/storage";
+import { useSettingsStore } from "@/stores/settingsStore";
 
-type TimerStatus = "idle" | "running" | "paused" | "completed";
+type TimerMode = "work" | "break";
 
 interface TimerState {
-  status: TimerStatus;
-  durationSeconds: number;
-  remainingSeconds: number;
-  currentBlockId: string | null;
-  pendingNotificationId: string | null;
-  startTimer: (durationSeconds: number, blockId?: string) => void;
-  pauseTimer: () => void;
-  resumeTimer: () => void;
-  resetTimer: () => void;
+  mode: TimerMode;
+  timeLeft: number;
+  running: boolean;
+  sessions: number;
+  linkedBlockId: string | null;
+  start: () => void;
+  pause: () => void;
+  reset: () => void;
   tick: () => void;
-  completeTimer: () => void;
-  setPendingNotificationId: (id: string | null) => void;
+  setLinkedBlock: (blockId: string | null) => void;
 }
 
-export const useTimerStore = create<TimerState>()(
-  persist(
-    (set) => ({
-      status: "idle",
-      durationSeconds: 0,
-      remainingSeconds: 0,
-      currentBlockId: null,
-      pendingNotificationId: null,
-      startTimer: (durationSeconds, blockId) =>
-        set({
-          status: "running",
-          durationSeconds,
-          remainingSeconds: durationSeconds,
-          currentBlockId: blockId ?? null,
-        }),
-      pauseTimer: () => set({ status: "paused" }),
-      resumeTimer: () => set({ status: "running" }),
-      resetTimer: () =>
-        set({
-          status: "idle",
-          durationSeconds: 0,
-          remainingSeconds: 0,
-          currentBlockId: null,
-          pendingNotificationId: null,
-        }),
-      tick: () =>
-        set((state) => {
-          if (state.remainingSeconds <= 1) {
-            return { ...state, remainingSeconds: 0, status: "completed" };
-          }
-          return { remainingSeconds: state.remainingSeconds - 1 };
-        }),
-      completeTimer: () =>
-        set({
-          status: "idle",
-          durationSeconds: 0,
-          remainingSeconds: 0,
-          currentBlockId: null,
-          pendingNotificationId: null,
-        }),
-      setPendingNotificationId: (id) => set({ pendingNotificationId: id }),
+function getWorkSeconds(): number {
+  return useSettingsStore.getState().pomodoroWorkMinutes * 60;
+}
+
+function getBreakSeconds(): number {
+  return useSettingsStore.getState().pomodoroBreakMinutes * 60;
+}
+
+export const useTimerStore = create<TimerState>()((set, get) => ({
+  mode: "work",
+  timeLeft: getWorkSeconds(),
+  running: false,
+  sessions: 0,
+  linkedBlockId: null,
+
+  start: () => set({ running: true }),
+
+  pause: () => set({ running: false }),
+
+  reset: () =>
+    set({
+      mode: "work",
+      timeLeft: getWorkSeconds(),
+      running: false,
+      linkedBlockId: null,
     }),
-    {
-      name: "timer-storage",
-      storage: createJSONStorage(() => zustandStorage),
-    }
-  )
-);
+
+  tick: () =>
+    set((state) => {
+      if (!state.running || state.timeLeft <= 0) return state;
+
+      const newTimeLeft = state.timeLeft - 1;
+
+      if (newTimeLeft <= 0) {
+        if (state.mode === "work") {
+          return {
+            timeLeft: getBreakSeconds(),
+            mode: "break" as TimerMode,
+            running: false,
+            sessions: state.sessions + 1,
+          };
+        }
+        return {
+          timeLeft: getWorkSeconds(),
+          mode: "work" as TimerMode,
+          running: false,
+        };
+      }
+
+      return { timeLeft: newTimeLeft };
+    }),
+
+  setLinkedBlock: (blockId) => set({ linkedBlockId: blockId }),
+}));
