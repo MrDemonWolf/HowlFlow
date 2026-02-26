@@ -5,7 +5,7 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
   output: "export",
-  basePath: "/howlflow",
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || "/howlflow",
   reactStrictMode: true,
   images: { unoptimized: true },
 };
