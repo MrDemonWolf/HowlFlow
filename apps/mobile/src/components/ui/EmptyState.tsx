@@ -1,27 +1,24 @@
-import { View, Text } from "react-native";
+import { View, Text, type ViewProps } from "react-native";
+import { clsx } from "clsx";
 
-type EmptyStateProps = {
+interface EmptyStateProps extends ViewProps {
+  emoji: string;
   title: string;
-  message: string;
-  emoji?: string;
-};
+  subtitle?: string;
+}
 
-export function EmptyState({ title, message, emoji }: EmptyStateProps) {
+export function EmptyState({ emoji, title, subtitle, className, ...rest }: EmptyStateProps) {
   return (
-    <View className="items-center justify-center py-12 px-6">
-      {emoji && <Text className="text-5xl mb-4">{emoji}</Text>}
-      <Text
-        className="text-text-primary text-lg mb-2 text-center"
-        style={{ fontFamily: "Montserrat_700Bold" }}
-      >
+    <View className={clsx("flex-1 items-center justify-center p-8", className)} {...rest}>
+      <Text className="mb-2 text-4xl">{emoji}</Text>
+      <Text className="text-center text-lg font-bold text-text-primary">
         {title}
       </Text>
-      <Text
-        className="text-text-muted text-sm text-center"
-        style={{ fontFamily: "Roboto_400Regular" }}
-      >
-        {message}
-      </Text>
+      {subtitle && (
+        <Text className="mt-1 text-center text-sm text-text-secondary">
+          {subtitle}
+        </Text>
+      )}
     </View>
   );
 }

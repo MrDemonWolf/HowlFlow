@@ -1,176 +1,165 @@
-import React, { useEffect, useMemo } from "react";
-import { View, Text, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useScheduleStore } from "@/stores/scheduleStore";
-import { useStatsStore } from "@/stores/statsStore";
-import { Card } from "@/components/ui/Card";
+import { useMemo } from "react";
+import { Text, View, ScrollView } from "react-native";
+
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { COMPLETION_MESSAGES } from "@/lib/constants";
-import { getToday } from "@/lib/dates";
+import { WOLF_QUOTES } from "@/lib/constants";
+import { todayKey } from "@/lib/dates";
+import { getLevel, getNextLevel, getLevelProgress } from "@/lib/xp";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useStatsStore } from "@/stores/statsStore";
 
-function getCompletionMessage(progress: number): string {
-  const percent = Math.round(progress * 100);
-  const thresholds = [100, 70, 40, 1, 0];
-
-  for (const threshold of thresholds) {
-    if (percent >= threshold) {
-      return COMPLETION_MESSAGES[threshold]!;
-    }
-  }
-
-  return COMPLETION_MESSAGES[0]!;
+function StatCard({
+  label,
+  value,
+  emoji,
+}: {
+  label: string;
+  value: string | number;
+  emoji: string;
+}) {
+  return (
+    <View
+      className="flex-1 items-center rounded-xl bg-bg-card p-4"
+      accessibilityLabel={`${label}: ${value}`}
+    >
+      <Text className="mb-1 text-2xl">{emoji}</Text>
+      <Text className="text-xl font-bold text-text-primary">{value}</Text>
+      <Text className="text-xs text-text-secondary">{label}</Text>
+    </View>
+  );
 }
 
 export default function WinsScreen() {
-  const dailyBlocks = useScheduleStore((s) => s.dailyBlocks);
-  const updateStreak = useStatsStore((s) => s.updateStreak);
+  const wolfQuotesEnabled = useSettingsStore((s) => s.settings.wolfQuotesEnabled);
+  const totalXP = useStatsStore((s) => s.totalXP);
   const currentStreak = useStatsStore((s) => s.currentStreak);
-  const totalFocusMinutes = useStatsStore((s) => s.totalFocusMinutes);
+  const longestStreak = useStatsStore((s) => s.longestStreak);
+  const graceDayUsed = useStatsStore((s) => s.graceDayUsed);
+  const totalBlocksCompleted = useStatsStore((s) => s.totalBlocksCompleted);
+  const totalFocusSessions = useStatsStore((s) => s.totalFocusSessions);
+  const totalSubtasksCompleted = useStatsStore((s) => s.totalSubtasksCompleted);
+  const dailyHistory = useStatsStore((s) => s.dailyHistory);
 
-  const today = getToday();
-  const blocks = dailyBlocks[today] ?? [];
-  const completedCount = blocks.filter((b) => b.done).length;
-  const totalCount = blocks.length;
-  const progress = totalCount > 0 ? completedCount / totalCount : 0;
-
-  const todayBreaks = useMemo(
-    () => blocks.filter((b) => b.type === "break" && b.done).length,
-    [blocks]
+  const today = todayKey();
+  const todayStats = useMemo(
+    () => dailyHistory.find((d) => d.date === today) ?? null,
+    [dailyHistory, today]
   );
 
-  const todayFocusBlocks = useMemo(
-    () => blocks.filter((b) => b.type === "focus" && b.done).length,
-    [blocks]
-  );
+  const level = getLevel(totalXP);
+  const nextLevel = getNextLevel(totalXP);
+  const levelProgress = getLevelProgress(totalXP);
 
-  useEffect(() => {
-    if (completedCount > 0) {
-      updateStreak(completedCount, totalCount);
-    }
-  }, [completedCount, totalCount, updateStreak]);
-
-  const wolfMessage = useMemo(
-    () => getCompletionMessage(progress),
-    [progress]
-  );
+  // Pick a motivational quote based on day
+  const dayIndex = new Date().getDate() % WOLF_QUOTES.length;
+  const quote = WOLF_QUOTES[dayIndex];
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-dark" edges={["top"]}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="px-5 pt-3 pb-4">
-          <Text
-            className="text-den-green text-2xl"
-            style={{ fontFamily: "Cinzel_700Bold" }}
-          >
-            Today's Pack Report
-          </Text>
-        </View>
-
-        {/* Big completion fraction */}
-        <View className="items-center mb-6">
-          <View className="flex-row items-baseline">
-            <Text
-              className="text-text-primary text-7xl"
-              style={{ fontFamily: "JetBrainsMono_700Bold" }}
-            >
-              {completedCount}
-            </Text>
-            <Text
-              className="text-text-muted text-3xl"
-              style={{ fontFamily: "JetBrainsMono_400Regular" }}
-            >
-              /{totalCount}
-            </Text>
+    <ScrollView
+      className="flex-1"
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      {/* Level badge */}
+      <View className="mx-4 mt-4 items-center rounded-xl bg-bg-card p-6">
+        <Text className="mb-1 text-4xl">🐺</Text>
+        <Text className="text-2xl font-bold text-wolf-blue">{level.name}</Text>
+        <Text className="mt-1 text-sm text-text-secondary">
+          {totalXP} XP total
+        </Text>
+        {nextLevel && (
+          <View className="mt-3 w-full">
+            <ProgressBar
+              value={levelProgress}
+              label={`${nextLevel.minXP - totalXP} XP to ${nextLevel.name}`}
+              color="#0FACED"
+            />
           </View>
-          <Text
-            className="text-text-muted text-sm mt-1"
-            style={{ fontFamily: "Montserrat_400Regular" }}
-          >
-            blocks completed
-          </Text>
-        </View>
-
-        {/* Progress bar */}
-        <View className="px-5 mb-6">
-          <ProgressBar
-            progress={progress}
-            color={progress >= 1 ? "#68d391" : "#0FACED"}
-            height={8}
-          />
-          <Text
-            className="text-text-muted text-xs text-center mt-2"
-            style={{ fontFamily: "Roboto_400Regular" }}
-          >
-            {Math.round(progress * 100)}% complete
-          </Text>
-        </View>
-
-        {/* Stat cards */}
-        <View className="flex-row gap-3 px-5 mb-6">
-          <Card className="flex-1">
-            <Text className="text-2xl mb-1">{"\u{1F525}"}</Text>
-            <Text
-              className="text-hunt-orange text-2xl"
-              style={{ fontFamily: "JetBrainsMono_700Bold" }}
-            >
-              {todayFocusBlocks}
-            </Text>
-            <Text
-              className="text-text-muted text-xs mt-1"
-              style={{ fontFamily: "Montserrat_600SemiBold" }}
-            >
-              Focus Hunts
-            </Text>
-          </Card>
-          <Card className="flex-1">
-            <Text className="text-2xl mb-1">{"\u{1F331}"}</Text>
-            <Text
-              className="text-den-green text-2xl"
-              style={{ fontFamily: "JetBrainsMono_700Bold" }}
-            >
-              {todayBreaks}
-            </Text>
-            <Text
-              className="text-text-muted text-xs mt-1"
-              style={{ fontFamily: "Montserrat_600SemiBold" }}
-            >
-              Breaks Taken
-            </Text>
-          </Card>
-        </View>
-
-        {/* Wolf message */}
-        <View className="mx-5 mb-6 bg-wolf-blue/10 border border-wolf-glow/20 rounded-xl p-4">
-          <Text
-            className="text-wolf-glow text-sm text-center italic"
-            style={{ fontFamily: "Roboto_400Regular" }}
-          >
-            {wolfMessage}
-          </Text>
-        </View>
-
-        {/* Streak */}
-        {currentStreak > 0 && (
-          <Card className="mx-5 mb-6 items-center">
-            <Text className="text-3xl mb-2">{"\u{1F525}"}</Text>
-            <Text
-              className="text-hunt-orange text-3xl"
-              style={{ fontFamily: "JetBrainsMono_700Bold" }}
-            >
-              {currentStreak}
-            </Text>
-            <Text
-              className="text-text-muted text-sm mt-1"
-              style={{ fontFamily: "Montserrat_600SemiBold" }}
-            >
-              day streak
-            </Text>
-          </Card>
         )}
+        {!nextLevel && (
+          <Text className="mt-2 text-sm font-medium text-wolf-green">
+            Max level reached!
+          </Text>
+        )}
+      </View>
 
-        <View className="h-8" />
-      </ScrollView>
-    </SafeAreaView>
+      {/* Streak */}
+      <View className="mx-4 mt-4 flex-row items-center justify-center gap-4 rounded-xl bg-bg-card p-4">
+        <View className="items-center">
+          <Text className="text-3xl font-bold text-wolf-amber">
+            {currentStreak}
+          </Text>
+          <Text className="text-xs text-text-secondary">Current Streak</Text>
+        </View>
+        <View className="h-8 w-px bg-border-default" />
+        <View className="items-center">
+          <Text className="text-3xl font-bold text-text-primary">
+            {longestStreak}
+          </Text>
+          <Text className="text-xs text-text-secondary">Best Streak</Text>
+        </View>
+        {graceDayUsed && (
+          <>
+            <View className="h-8 w-px bg-border-default" />
+            <View className="items-center">
+              <Text className="text-lg">🛡️</Text>
+              <Text className="text-xs text-text-muted">Grace used</Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Today's stats */}
+      <Text className="mx-4 mb-2 mt-6 text-sm font-semibold uppercase text-text-muted">
+        Today
+      </Text>
+      <View className="mx-4 flex-row gap-3">
+        <StatCard
+          emoji="📦"
+          label="Blocks"
+          value={todayStats?.blocksCompleted ?? 0}
+        />
+        <StatCard
+          emoji="🎯"
+          label="Focus"
+          value={todayStats?.focusSessions ?? 0}
+        />
+        <StatCard
+          emoji="✅"
+          label="Subtasks"
+          value={todayStats?.subtasksCompleted ?? 0}
+        />
+      </View>
+
+      {/* All-time stats */}
+      <Text className="mx-4 mb-2 mt-6 text-sm font-semibold uppercase text-text-muted">
+        All Time
+      </Text>
+      <View className="mx-4 flex-row gap-3">
+        <StatCard
+          emoji="📦"
+          label="Blocks"
+          value={totalBlocksCompleted}
+        />
+        <StatCard
+          emoji="🎯"
+          label="Sessions"
+          value={totalFocusSessions}
+        />
+        <StatCard
+          emoji="✅"
+          label="Subtasks"
+          value={totalSubtasksCompleted}
+        />
+      </View>
+
+      {/* Wolf quote */}
+      {wolfQuotesEnabled && (
+        <View className="mx-4 mt-6 rounded-xl bg-bg-card p-4">
+          <Text className="text-center text-sm italic text-text-secondary">
+            "{quote}"
+          </Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }

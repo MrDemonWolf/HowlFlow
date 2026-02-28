@@ -1,71 +1,58 @@
 import { View } from "react-native";
+import { clsx } from "clsx";
 import Svg, { Circle } from "react-native-svg";
-import Animated, {
-  useAnimatedProps,
-  withTiming,
-  useDerivedValue,
-} from "react-native-reanimated";
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-type ProgressRingProps = {
-  progress: number;
+interface ProgressRingProps {
   size: number;
   strokeWidth: number;
+  progress: number; // 0 to 1
   color: string;
-  trackColor?: string;
+  bgColor?: string;
+  className?: string;
   children?: React.ReactNode;
-};
+}
 
 export function ProgressRing({
-  progress,
   size,
   strokeWidth,
+  progress,
   color,
-  trackColor = "rgba(94,111,148,0.3)",
+  bgColor = "#1A2D5E",
+  className,
   children,
 }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const center = size / 2;
-
-  const animatedProgress = useDerivedValue(() =>
-    withTiming(Math.max(0, Math.min(1, progress)), { duration: 400 })
-  );
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: circumference * (1 - animatedProgress.value),
-  }));
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference * (1 - Math.min(1, Math.max(0, progress)));
 
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+    <View className={clsx(className)} style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} style={{ position: "absolute" }}>
+        {/* Background ring */}
         <Circle
-          cx={center}
-          cy={center}
+          cx={size / 2}
+          cy={size / 2}
           r={radius}
-          stroke={trackColor}
+          stroke={bgColor}
           strokeWidth={strokeWidth}
           fill="none"
         />
-        <AnimatedCircle
-          cx={center}
-          cy={center}
+        {/* Progress ring */}
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
           r={radius}
           stroke={color}
           strokeWidth={strokeWidth}
           fill="none"
-          strokeDasharray={circumference}
-          animatedProps={animatedProps}
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          transform={`rotate(-90 ${center} ${center})`}
+          rotation="-90"
+          origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
-      {children && (
-        <View style={{ alignItems: "center", justifyContent: "center" }}>
-          {children}
-        </View>
-      )}
+      {children}
     </View>
   );
 }

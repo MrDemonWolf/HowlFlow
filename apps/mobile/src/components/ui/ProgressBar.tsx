@@ -1,46 +1,43 @@
-import { View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  useDerivedValue,
-} from "react-native-reanimated";
+import { View, Text } from "react-native";
 
-type ProgressBarProps = {
-  progress: number;
+interface ProgressBarProps {
+  /** Progress value from 0 to 1 */
+  value: number;
+  label?: string;
   color?: string;
   height?: number;
-  className?: string;
-};
+}
 
 export function ProgressBar({
-  progress,
+  value,
+  label,
   color = "#0FACED",
-  height = 6,
-  className = "",
+  height = 8,
 }: ProgressBarProps) {
-  const animatedProgress = useDerivedValue(() =>
-    withTiming(Math.max(0, Math.min(1, progress)), { duration: 400 })
-  );
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: `${animatedProgress.value * 100}%` as `${number}%`,
-  }));
+  const pct = Math.round(Math.min(1, value) * 100);
 
   return (
     <View
-      className={`rounded-full overflow-hidden bg-text-dim/20 ${className}`}
-      style={{ height }}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: pct }}
+      accessibilityLabel={label ?? `${pct}% complete`}
     >
-      <Animated.View
-        style={[
-          {
+      {label && (
+        <Text className="mb-1 text-xs text-text-secondary">{label}</Text>
+      )}
+      <View
+        className="w-full overflow-hidden rounded-full bg-xp-bg"
+        style={{ height }}
+      >
+        <View
+          className="rounded-full"
+          style={{
             height,
-            borderRadius: height / 2,
+            width: `${pct}%`,
             backgroundColor: color,
-          },
-          animatedStyle,
-        ]}
-      />
+          }}
+        />
+      </View>
     </View>
   );
 }

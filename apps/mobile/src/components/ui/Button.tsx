@@ -1,68 +1,50 @@
-import { Pressable, Text } from "react-native";
-import { tapFeedback } from "@/lib/haptics";
+import { Text, TouchableOpacity, type TouchableOpacityProps } from "react-native";
+import { clsx } from "clsx";
 
-type ButtonProps = {
+interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  onPress: () => void;
-  variant?: "primary" | "secondary" | "ghost";
-  disabled?: boolean;
+  variant?: "primary" | "secondary" | "danger";
   size?: "sm" | "md" | "lg";
-  className?: string;
-  accessibilityLabel: string;
-};
-
-const variantStyles = {
-  primary: "bg-hunt-orange",
-  secondary: "border border-wolf-blue",
-  ghost: "bg-transparent",
-} as const;
-
-const variantTextStyles = {
-  primary: "text-white",
-  secondary: "text-wolf-blue",
-  ghost: "text-text-secondary",
-} as const;
-
-const sizeStyles = {
-  sm: "px-3 py-1.5",
-  md: "px-5 py-3",
-  lg: "px-6 py-4",
-} as const;
-
-const sizeTextStyles = {
-  sm: "text-sm",
-  md: "text-base",
-  lg: "text-lg",
-} as const;
+}
 
 export function Button({
   title,
-  onPress,
   variant = "primary",
-  disabled = false,
   size = "md",
-  className = "",
-  accessibilityLabel,
+  className,
+  ...props
 }: ButtonProps) {
-  const handlePress = () => {
-    tapFeedback();
-    onPress();
-  };
+  const bgClass = {
+    primary: "bg-wolf-blue",
+    secondary: "bg-bg-card",
+    danger: "bg-wolf-red",
+  }[variant];
+
+  const textClass = {
+    primary: "text-bg-base font-bold",
+    secondary: "text-text-secondary font-medium",
+    danger: "text-white font-bold",
+  }[variant];
+
+  const sizeClass = {
+    sm: "px-3 py-1.5",
+    md: "px-4 py-2.5",
+    lg: "px-6 py-3",
+  }[size];
+
+  const textSizeClass = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+  }[size];
 
   return (
-    <Pressable
-      onPress={handlePress}
-      disabled={disabled}
-      accessibilityLabel={accessibilityLabel}
+    <TouchableOpacity
+      className={clsx("items-center rounded-xl", bgClass, sizeClass, className)}
       accessibilityRole="button"
-      className={`rounded-xl items-center justify-center ${variantStyles[variant]} ${sizeStyles[size]} ${disabled ? "opacity-50" : ""} ${className}`}
+      {...props}
     >
-      <Text
-        className={`font-semibold ${variantTextStyles[variant]} ${sizeTextStyles[size]}`}
-        style={{ fontFamily: "Montserrat_600SemiBold" }}
-      >
-        {title}
-      </Text>
-    </Pressable>
+      <Text className={clsx(textSizeClass, textClass)}>{title}</Text>
+    </TouchableOpacity>
   );
 }

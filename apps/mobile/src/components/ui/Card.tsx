@@ -1,14 +1,15 @@
-import { View } from "react-native";
+import { View, type ViewProps } from "react-native";
+import { clsx } from "clsx";
 
-type CardProps = {
+interface CardProps extends ViewProps {
   children: React.ReactNode;
-  className?: string;
-};
+}
 
-export function Card({ children, className = "" }: CardProps) {
+export function Card({ children, className, ...props }: CardProps) {
   return (
     <View
-      className={`bg-bg-card rounded-2xl p-4 border border-text-dim/15 ${className}`}
+      className={clsx("rounded-2xl bg-bg-card p-4", className)}
+      {...props}
     >
       {children}
     </View>
