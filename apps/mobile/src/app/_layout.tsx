@@ -1,161 +1,71 @@
 import "../global.css";
-import { useFonts } from "expo-font";
-import {
-  Cinzel_600SemiBold,
-  Cinzel_700Bold,
-  Cinzel_900Black,
-} from "@expo-google-fonts/cinzel";
-import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_700Bold,
-} from "@expo-google-fonts/jetbrains-mono";
-import {
-  Montserrat_400Regular,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
-  Montserrat_800ExtraBold,
-} from "@expo-google-fonts/montserrat";
-import {
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_700Bold,
-} from "@expo-google-fonts/roboto";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useLayoutEffect } from "react";
+
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
-import { Appearance, AppState, useColorScheme } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useLayoutEffect } from "react";
+import { Appearance } from "react-native";
 import { colorScheme as nativewindColorScheme } from "react-native-css";
-import {
-  configureNotificationHandler,
-  requestNotificationPermissions,
-  cancelAllTimerNotifications,
-  scheduleDailyBlockNotifications,
-  scheduleMorningReminder,
-} from "@/lib/notifications";
-import { getToday } from "@/lib/dates";
-import { useSettingsStore } from "@/stores/settingsStore";
-import { useScheduleStore } from "@/stores/scheduleStore";
+import "react-native-reanimated";
 
-SplashScreen.preventAutoHideAsync();
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useWidgetSync } from "@/hooks/useWidgetSync";
+import { defaultStackScreenOptions } from "@/lib/stackOptions";
+import { getStoredTheme, useSettingsStore } from "@/stores/settingsStore";
 
-// Seed NativeWind with system color scheme before first render
+// Read stored theme at MODULE level so NativeWind is seeded before first render.
+// MMKV reads are synchronous — no flash of wrong theme.
+const storedTheme = getStoredTheme();
 const systemScheme = Appearance.getColorScheme();
-nativewindColorScheme.set(systemScheme === "dark" ? "dark" : "light");
+let initialScheme: "light" | "dark" = "dark";
+if (storedTheme === "light") {
+  initialScheme = "light";
+} else if (storedTheme === "auto") {
+  initialScheme = systemScheme === "light" ? "light" : "dark";
+}
+nativewindColorScheme.set(initialScheme);
+
+export const unstable_settings = {
+  anchor: "(tabs)",
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
-  const [fontsLoaded] = useFonts({
-    Cinzel_600SemiBold,
-    Cinzel_700Bold,
-    Cinzel_900Black,
-    JetBrainsMono_400Regular,
-    JetBrainsMono_700Bold,
-    Montserrat_400Regular,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
-    Montserrat_800ExtraBold,
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_700Bold,
-  });
+  const themePreference = useSettingsStore((s) => s.settings.themePreference);
+  const onboardingCompleted = useSettingsStore((s) => s.settings.onboardingCompleted);
+  useNotifications();
+  useWidgetSync();
 
   useLayoutEffect(() => {
-    nativewindColorScheme.set(
-      colorScheme ?? Appearance.getColorScheme() ?? "light"
-    );
-  }, [colorScheme]);
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-
-      // Bootstrap notifications
-      try {
-        configureNotificationHandler();
-        const settings = useSettingsStore.getState();
-        if (settings.notificationsEnabled) {
-          requestNotificationPermissions();
-          scheduleMorningReminder(settings.morningReminderTime);
-        }
-        cancelAllTimerNotifications();
-      } catch {
-        // Notifications may not be available in all environments
-      }
-
-      // Generate today's blocks on cold start
-      const today = getToday();
-      useScheduleStore.getState().generateDailyBlocks(today);
-      useScheduleStore.getState().cleanOldData(30);
-
-      // Schedule block notifications
-      const blocks = useScheduleStore.getState().dailyBlocks[today];
-      if (blocks?.length) {
-        const { notifyMinutesBefore, notificationsEnabled } =
-          useSettingsStore.getState();
-        if (notificationsEnabled) {
-          scheduleDailyBlockNotifications(blocks, notifyMinutesBefore);
-        }
-      }
+    if (themePreference === "auto") {
+      Appearance.setColorScheme("unspecified");
+    } else {
+      Appearance.setColorScheme(themePreference);
     }
-  }, [fontsLoaded]);
+  }, [themePreference]);
 
-  // Day transition: re-generate blocks when app comes to foreground on a new day
-  useEffect(() => {
-    let lastDate = getToday();
-
-    const sub = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "active") {
-        const now = getToday();
-        if (now !== lastDate) {
-          lastDate = now;
-          useScheduleStore.getState().generateDailyBlocks(now);
-
-          // Re-schedule block notifications for the new day
-          const blocks = useScheduleStore.getState().dailyBlocks[now];
-          const settings = useSettingsStore.getState();
-          if (blocks?.length && settings.notificationsEnabled) {
-            scheduleDailyBlockNotifications(
-              blocks,
-              settings.notifyMinutesBefore
-            );
-          }
-        }
-      }
-    });
-
-    return () => sub.remove();
-  }, []);
-
-  if (!fontsLoaded) {
-    return null;
-  }
+  useLayoutEffect(() => {
+    nativewindColorScheme.set(colorScheme ?? "dark");
+  }, [colorScheme]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor:
-              colorScheme === "dark" ? "#091533" : "#F4F8FC",
-          },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="settings"
-          options={{
-            headerShown: true,
-            presentation: "modal",
-          }}
-        />
+      <Stack screenOptions={defaultStackScreenOptions}>
+        <Stack.Protected guard={!onboardingCompleted}>
+          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={onboardingCompleted}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings"
+            options={{
+              title: "Settings",
+              presentation: "modal",
+              headerLargeTitle: false,
+            }}
+          />
+        </Stack.Protected>
       </Stack>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>

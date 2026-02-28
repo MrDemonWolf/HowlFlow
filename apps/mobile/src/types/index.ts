@@ -1,79 +1,162 @@
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+export type ThemePreference = "dark" | "light" | "auto";
+
+export interface Settings {
+  // Schedule
+  wakeUpTime: string; // HH:mm
+  windDownTime: string; // HH:mm
+
+  // Timer
+  workMinutes: number;
+  breakMinutes: number;
+  longBreakMinutes: number;
+  sessionsBeforeLongBreak: number;
+
+  // Notifications
+  notificationsEnabled: boolean;
+  morningReminderTime: string; // HH:mm
+
+  // Appearance
+  themePreference: ThemePreference;
+  hapticsEnabled: boolean;
+  wolfQuotesEnabled: boolean;
+
+  // Data
+  iCloudSyncEnabled: boolean;
+
+  // Onboarding
+  onboardingCompleted: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  wakeUpTime: "07:00",
+  windDownTime: "21:00",
+  workMinutes: 25,
+  breakMinutes: 5,
+  longBreakMinutes: 15,
+  sessionsBeforeLongBreak: 4,
+  notificationsEnabled: true,
+  morningReminderTime: "07:30",
+  themePreference: "dark",
+  hapticsEnabled: true,
+  wolfQuotesEnabled: true,
+  iCloudSyncEnabled: false,
+  onboardingCompleted: false,
+};
+
+// ─── Schedule ────────────────────────────────────────────────────────────────
+
 export type BlockType =
-  | "routine"
+  | "morning"
   | "focus"
-  | "break"
-  | "planning"
+  | "meals"
+  | "movement"
+  | "chill"
+  | "creative"
   | "social"
-  | "light";
+  | "admin"
+  | "wind-down"
+  | "free";
 
 export interface SubTask {
   id: string;
-  text: string;
+  label: string;
   done: boolean;
-  completedAt?: string;
 }
 
 export interface BlockTemplate {
   id: string;
   label: string;
-  emoji: string;
   type: BlockType;
-  duration: number;
-  time: string;
-  defaultTasks: string[];
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
+  durationMinutes: number;
+  subtasks: string[]; // default subtask labels
+  emoji: string;
 }
 
 export interface DailyBlock {
   id: string;
   templateId: string;
-  date: string;
+  date: string; // YYYY-MM-DD
   label: string;
-  emoji: string;
   type: BlockType;
-  duration: number;
-  time: string | null;
-  tasks: SubTask[];
+  emoji: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  subtasks: SubTask[];
   done: boolean;
-  completedAt?: string;
-  sortOrder: number;
+  completedAt?: string; // ISO string
 }
 
-export interface BrainDump {
+// ─── Timer ───────────────────────────────────────────────────────────────────
+
+export type TimerMode = "work" | "break" | "longBreak";
+
+export interface TimerState {
+  mode: TimerMode;
+  sessionsCompleted: number;
+  linkedBlockId: string | null;
+  // NOT persisted:
+  isRunning: boolean;
+  timeLeft: number; // seconds
+}
+
+// ─── Brain Dump ──────────────────────────────────────────────────────────────
+
+export interface DumpEntry {
   id: string;
-  content: string;
-  createdAt: string;
+  text: string;
+  createdAt: string; // ISO string
   archived: boolean;
 }
 
-export interface FocusSession {
-  id: string;
-  blockId?: string;
-  durationSeconds: number;
-  completed: boolean;
-  startedAt: string;
-  endedAt?: string;
+// ─── Stats / XP ──────────────────────────────────────────────────────────────
+
+export interface WolfLevel {
+  name: string;
+  minXP: number;
+}
+
+export const WOLF_LEVELS: WolfLevel[] = [
+  { name: "Pup", minXP: 0 },
+  { name: "Scout", minXP: 100 },
+  { name: "Tracker", minXP: 300 },
+  { name: "Hunter", minXP: 600 },
+  { name: "Howler", minXP: 1000 },
+  { name: "Alpha", minXP: 1500 },
+  { name: "Pack Leader", minXP: 2500 },
+  { name: "Lone Wolf Legend", minXP: 4000 },
+];
+
+export interface DailyStats {
+  date: string; // YYYY-MM-DD
+  blocksCompleted: number;
+  totalBlocks: number;
+  focusSessions: number;
+  subtasksCompleted: number;
+  xpEarned: number;
 }
 
 export interface UserStats {
+  totalXP: number;
   currentStreak: number;
   longestStreak: number;
-  lastActiveDate: string | null;
-  totalFocusMinutes: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  graceDayUsed: boolean; // streak grace
   totalBlocksCompleted: number;
+  totalFocusSessions: number;
+  totalSubtasksCompleted: number;
+  dailyHistory: DailyStats[];
 }
 
-export interface UserSettings {
-  wakeUpTime: string;
-  windDownTime: string;
-  pomodoroWorkMinutes: number;
-  pomodoroBreakMinutes: number;
-  notifyMinutesBefore: number;
-  morningReminderTime: string;
-  notificationsEnabled: boolean;
-  hapticsEnabled: boolean;
-  iCloudSyncEnabled: boolean;
-  wolfQuotesEnabled: boolean;
-}
+export const DEFAULT_STATS: UserStats = {
+  totalXP: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  lastActiveDate: "",
+  graceDayUsed: false,
+  totalBlocksCompleted: 0,
+  totalFocusSessions: 0,
+  totalSubtasksCompleted: 0,
+  dailyHistory: [],
+};

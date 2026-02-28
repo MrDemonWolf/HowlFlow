@@ -1,229 +1,218 @@
-import React, { useEffect, useCallback, useRef } from "react";
-import { View, Text, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
-import { useTimerStore } from "@/stores/timerStore";
-import { useSettingsStore } from "@/stores/settingsStore";
-import { useStatsStore } from "@/stores/statsStore";
-import { useScheduleStore } from "@/stores/scheduleStore";
+import { useEffect, useRef, useCallback } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import type { LiveActivity } from "expo-widgets";
+
 import { ProgressRing } from "@/components/ui/ProgressRing";
-import { Button } from "@/components/ui/Button";
-import { secondsToMMSS } from "@/lib/dates";
-import { successFeedback, tapFeedback, warningFeedback } from "@/lib/haptics";
-import {
-  scheduleTimerCompleteNotification,
-  cancelAllTimerNotifications,
-} from "@/lib/notifications";
+import { useHaptics } from "@/hooks/useHaptics";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useTimerStore } from "@/stores/timerStore";
+import type { TimerMode } from "@/types";
+import { TimerActivity } from "@/widgets/TimerActivity";
+
+const MODE_LABELS: Record<TimerMode, string> = {
+  work: "Focus Time",
+  break: "Short Break",
+  longBreak: "Long Break",
+};
+
+const MODE_COLORS: Record<TimerMode, string> = {
+  work: "#0FACED",
+  break: "#34D399",
+  longBreak: "#7C5CFC",
+};
+
+function formatSeconds(s: number): string {
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
 
 export default function TimerScreen() {
-  const params = useLocalSearchParams<{
-    blockId?: string;
-    blockLabel?: string;
-  }>();
-
+  const { settings } = useSettingsStore();
   const {
     mode,
+    sessionsCompleted,
+    isRunning,
     timeLeft,
-    running,
-    sessions,
-    linkedBlockId,
+    tick,
     start,
     pause,
+    resume,
     reset,
-    tick,
-    setLinkedBlock,
+    completeSession,
   } = useTimerStore();
+  const { impact, notification } = useHaptics();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const liveActivityRef = useRef<LiveActivity<{
+    mode: string;
+    modeLabel: string;
+    timeLeftFormatted: string;
+    totalDuration: number;
+    sessionsCompleted: number;
+    color: string;
+  }> | null>(null);
 
-  const pomodoroWorkMinutes = useSettingsStore((s) => s.pomodoroWorkMinutes);
-  const pomodoroBreakMinutes = useSettingsStore((s) => s.pomodoroBreakMinutes);
-  const recordFocusSession = useStatsStore((s) => s.recordFocusSession);
-  const toggleBlock = useScheduleStore((s) => s.toggleBlock);
+  const getDuration = useCallback(
+    (m: TimerMode) => {
+      switch (m) {
+        case "work":
+          return settings.workMinutes * 60;
+        case "break":
+          return settings.breakMinutes * 60;
+        case "longBreak":
+          return settings.longBreakMinutes * 60;
+      }
+    },
+    [settings.workMinutes, settings.breakMinutes, settings.longBreakMinutes]
+  );
 
-  const notifIdRef = useRef<string | null>(null);
-  const prevMode = useRef(mode);
-  const prevRunning = useRef(running);
+  // Initialize timer if timeLeft is 0
+  useEffect(() => {
+    if (timeLeft === 0 && !isRunning) {
+      reset(getDuration(mode));
+    }
+  }, [mode, timeLeft, isRunning, reset, getDuration]);
 
   // Tick interval
   useEffect(() => {
-    if (!running) return;
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [running, tick]);
-
-  // Detect mode switch (timer completed a cycle)
-  useEffect(() => {
-    if (prevMode.current !== mode && prevRunning.current) {
-      successFeedback();
-
-      if (prevMode.current === "work") {
-        recordFocusSession(pomodoroWorkMinutes);
-
-        // Offer to mark linked block complete
-        if (linkedBlockId) {
-          Alert.alert(
-            "Hunt Complete",
-            "Mark the linked block as done?",
-            [
-              { text: "Not Yet", style: "cancel" },
-              {
-                text: "Mark Done",
-                onPress: () => {
-                  toggleBlock(linkedBlockId);
-                  setLinkedBlock(null);
-                },
-              },
-            ]
-          );
-        }
-      }
-
-      // Cancel old notification
-      if (notifIdRef.current) {
-        cancelAllTimerNotifications();
-        notifIdRef.current = null;
-      }
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        tick();
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-    prevMode.current = mode;
-    prevRunning.current = running;
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isRunning, tick]);
+
+  // Live Activity: start/update/end
+  useEffect(() => {
+    if (isRunning && !liveActivityRef.current) {
+      const duration = getDuration(mode);
+      liveActivityRef.current = TimerActivity.start({
+        mode,
+        modeLabel: MODE_LABELS[mode],
+        timeLeftFormatted: formatSeconds(timeLeft),
+        totalDuration: duration,
+        sessionsCompleted,
+        color: MODE_COLORS[mode],
+      });
+    } else if (isRunning && liveActivityRef.current) {
+      liveActivityRef.current.update({
+        mode,
+        modeLabel: MODE_LABELS[mode],
+        timeLeftFormatted: formatSeconds(timeLeft),
+        totalDuration: getDuration(mode),
+        sessionsCompleted,
+        color: MODE_COLORS[mode],
+      });
+    } else if (!isRunning && liveActivityRef.current) {
+      liveActivityRef.current.end("immediate");
+      liveActivityRef.current = null;
+    }
+  }, [isRunning, timeLeft, mode, sessionsCompleted, getDuration]);
+
+  // Session completion
+  useEffect(() => {
+    if (timeLeft === 0 && isRunning) {
+      notification();
+      // End current live activity before mode changes
+      if (liveActivityRef.current) {
+        liveActivityRef.current.end("immediate");
+        liveActivityRef.current = null;
+      }
+      completeSession(
+        settings.workMinutes,
+        settings.breakMinutes,
+        settings.longBreakMinutes,
+        settings.sessionsBeforeLongBreak
+      );
+    }
   }, [
-    mode,
-    running,
-    linkedBlockId,
-    pomodoroWorkMinutes,
-    recordFocusSession,
-    toggleBlock,
-    setLinkedBlock,
+    timeLeft,
+    isRunning,
+    notification,
+    completeSession,
+    settings.workMinutes,
+    settings.breakMinutes,
+    settings.longBreakMinutes,
+    settings.sessionsBeforeLongBreak,
   ]);
 
-  // Set linked block from deep link
-  useEffect(() => {
-    if (params.blockId) {
-      setLinkedBlock(params.blockId);
+  const duration = getDuration(mode);
+  const progress = duration > 0 ? (duration - timeLeft) / duration : 0;
+  const color = MODE_COLORS[mode];
+
+  const handleStartPause = useCallback(() => {
+    impact();
+    if (isRunning) {
+      pause();
+    } else if (timeLeft > 0) {
+      resume();
+    } else {
+      start(getDuration(mode));
     }
-  }, [params.blockId, setLinkedBlock]);
+  }, [isRunning, timeLeft, mode, impact, pause, resume, start, getDuration]);
 
-  const handleStart = useCallback(async () => {
-    tapFeedback();
-    start();
-    const notifId = await scheduleTimerCompleteNotification(
-      timeLeft,
-      params.blockLabel ?? (mode === "work" ? "Focus Hunt" : "Break")
-    );
-    if (notifId) notifIdRef.current = notifId;
-  }, [start, timeLeft, params.blockLabel, mode]);
-
-  const handlePause = useCallback(async () => {
-    tapFeedback();
-    pause();
-    await cancelAllTimerNotifications();
-    notifIdRef.current = null;
-  }, [pause]);
-
-  const handleReset = useCallback(async () => {
-    warningFeedback();
-    reset();
-    await cancelAllTimerNotifications();
-    notifIdRef.current = null;
-  }, [reset]);
-
-  const totalSeconds =
-    mode === "work"
-      ? pomodoroWorkMinutes * 60
-      : pomodoroBreakMinutes * 60;
-  const progress = totalSeconds > 0 ? 1 - timeLeft / totalSeconds : 0;
-
-  const isWorkMode = mode === "work";
-  const ringColor = isWorkMode ? "#fc814a" : "#68d391";
-  const modeLabel = isWorkMode ? "Hunt Mode" : "Rest at Den";
-  const modeLabelColor = isWorkMode ? "text-hunt-orange" : "text-den-green";
+  const handleReset = useCallback(() => {
+    impact();
+    if (liveActivityRef.current) {
+      liveActivityRef.current.end("immediate");
+      liveActivityRef.current = null;
+    }
+    reset(getDuration(mode));
+  }, [impact, reset, getDuration, mode]);
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-dark" edges={["top"]}>
-      <View className="flex-1 items-center justify-center px-6">
-        {/* Mode label */}
-        <Text
-          className={`${modeLabelColor} text-lg mb-2`}
-          style={{ fontFamily: "Cinzel_700Bold" }}
-        >
-          {modeLabel}
+    <View className="flex-1 items-center justify-center">
+      {/* Mode label */}
+      <Text className="mb-2 text-sm font-medium uppercase text-text-secondary">
+        {MODE_LABELS[mode]}
+      </Text>
+
+      {/* Progress ring */}
+      <ProgressRing
+        size={260}
+        strokeWidth={12}
+        progress={progress}
+        color={color}
+      >
+        <Text className="text-5xl font-bold text-text-primary">
+          {formatSeconds(timeLeft)}
         </Text>
+      </ProgressRing>
 
-        {/* Hunt count */}
-        <Text
-          className="text-text-muted text-sm mb-6"
-          style={{ fontFamily: "Montserrat_400Regular" }}
+      {/* Sessions counter */}
+      <Text className="mt-4 text-sm text-text-secondary">
+        Sessions: {sessionsCompleted}
+      </Text>
+
+      {/* Controls */}
+      <View className="mt-8 flex-row gap-4">
+        <TouchableOpacity
+          onPress={handleReset}
+          className="rounded-xl bg-bg-card px-6 py-3"
+          accessibilityRole="button"
+          accessibilityLabel="Reset timer"
         >
-          {sessions} hunt{sessions !== 1 ? "s" : ""} completed
-        </Text>
+          <Text className="text-base font-medium text-text-secondary">Reset</Text>
+        </TouchableOpacity>
 
-        {/* Timer ring */}
-        <ProgressRing
-          progress={progress}
-          size={260}
-          strokeWidth={12}
-          color={ringColor}
+        <TouchableOpacity
+          onPress={handleStartPause}
+          className="rounded-xl px-8 py-3"
+          style={{ backgroundColor: color }}
+          accessibilityRole="button"
+          accessibilityLabel={isRunning ? "Pause timer" : "Start timer"}
         >
-          <Text
-            className="text-text-primary text-5xl"
-            style={{ fontFamily: "JetBrainsMono_700Bold" }}
-          >
-            {secondsToMMSS(timeLeft)}
+          <Text className="text-base font-bold text-bg-base">
+            {isRunning ? "Pause" : "Start"}
           </Text>
-          {running && (
-            <Text
-              className="text-text-muted text-xs mt-1"
-              style={{ fontFamily: "Roboto_400Regular" }}
-            >
-              remaining
-            </Text>
-          )}
-        </ProgressRing>
-
-        {/* Linked block indicator */}
-        {linkedBlockId && (
-          <Text
-            className="text-text-muted text-xs mt-4"
-            style={{ fontFamily: "Roboto_400Regular" }}
-          >
-            Linked to block
-          </Text>
-        )}
-
-        {/* Controls */}
-        <View className="mt-10 w-full">
-          {!running && (
-            <Button
-              title={isWorkMode ? "Start Hunt" : "Start Break"}
-              onPress={handleStart}
-              variant="primary"
-              accessibilityLabel={
-                isWorkMode ? "Start focus hunt" : "Start break timer"
-              }
-            />
-          )}
-
-          {running && (
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <Button
-                  title="Pause"
-                  onPress={handlePause}
-                  variant="secondary"
-                  accessibilityLabel="Pause timer"
-                />
-              </View>
-              <View className="flex-1">
-                <Button
-                  title="Reset"
-                  onPress={handleReset}
-                  variant="ghost"
-                  accessibilityLabel="Reset timer"
-                />
-              </View>
-            </View>
-          )}
-        </View>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
