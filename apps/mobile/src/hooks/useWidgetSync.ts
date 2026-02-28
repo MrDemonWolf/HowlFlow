@@ -2,7 +2,6 @@ import { useEffect } from "react";
 
 import { todayKey } from "@/lib/dates";
 import { useScheduleStore } from "@/stores/scheduleStore";
-import { ScheduleWidget } from "@/widgets/ScheduleWidget";
 
 export function useWidgetSync() {
   const blocks = useScheduleStore((s) => s.blocks);
@@ -16,13 +15,18 @@ export function useWidgetSync() {
 
     const nextBlock = todayBlocks.find((b) => !b.done);
 
-    ScheduleWidget.updateSnapshot({
-      blocksCompleted,
-      totalBlocks,
-      progressPercent,
-      nextBlockLabel: nextBlock?.label ?? "All done!",
-      nextBlockTime: nextBlock ? `${nextBlock.startTime} – ${nextBlock.endTime}` : "",
-      nextBlockEmoji: nextBlock?.emoji ?? "🎉",
-    });
+    try {
+      const { getScheduleWidget } = require("@/widgets/ScheduleWidget");
+      getScheduleWidget().updateSnapshot({
+        blocksCompleted,
+        totalBlocks,
+        progressPercent,
+        nextBlockLabel: nextBlock?.label ?? "All done!",
+        nextBlockTime: nextBlock ? `${nextBlock.startTime} – ${nextBlock.endTime}` : "",
+        nextBlockEmoji: nextBlock?.emoji ?? "🎉",
+      });
+    } catch {
+      // Native module not available before prebuild
+    }
   }, [blocks]);
 }

@@ -1,13 +1,11 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import type { LiveActivity } from "expo-widgets";
 
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTimerStore } from "@/stores/timerStore";
 import type { TimerMode } from "@/types";
-import { TimerActivity } from "@/widgets/TimerActivity";
 
 const MODE_LABELS: Record<TimerMode, string> = {
   work: "Focus Time",
@@ -43,14 +41,8 @@ export default function TimerScreen() {
   } = useTimerStore();
   const { impact, notification } = useHaptics();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const liveActivityRef = useRef<LiveActivity<{
-    mode: string;
-    modeLabel: string;
-    timeLeftFormatted: string;
-    totalDuration: number;
-    sessionsCompleted: number;
-    color: string;
-  }> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const liveActivityRef = useRef<any>(null);
 
   const getDuration = useCallback(
     (m: TimerMode) => {
@@ -90,28 +82,35 @@ export default function TimerScreen() {
 
   // Live Activity: start/update/end
   useEffect(() => {
-    if (isRunning && !liveActivityRef.current) {
-      const duration = getDuration(mode);
-      liveActivityRef.current = TimerActivity.start({
-        mode,
-        modeLabel: MODE_LABELS[mode],
-        timeLeftFormatted: formatSeconds(timeLeft),
-        totalDuration: duration,
-        sessionsCompleted,
-        color: MODE_COLORS[mode],
-      });
-    } else if (isRunning && liveActivityRef.current) {
-      liveActivityRef.current.update({
-        mode,
-        modeLabel: MODE_LABELS[mode],
-        timeLeftFormatted: formatSeconds(timeLeft),
-        totalDuration: getDuration(mode),
-        sessionsCompleted,
-        color: MODE_COLORS[mode],
-      });
-    } else if (!isRunning && liveActivityRef.current) {
-      liveActivityRef.current.end("immediate");
-      liveActivityRef.current = null;
+    try {
+      const { getTimerActivity } = require("@/widgets/TimerActivity");
+      const TimerActivity = getTimerActivity();
+
+      if (isRunning && !liveActivityRef.current) {
+        const duration = getDuration(mode);
+        liveActivityRef.current = TimerActivity.start({
+          mode,
+          modeLabel: MODE_LABELS[mode],
+          timeLeftFormatted: formatSeconds(timeLeft),
+          totalDuration: duration,
+          sessionsCompleted,
+          color: MODE_COLORS[mode],
+        });
+      } else if (isRunning && liveActivityRef.current) {
+        liveActivityRef.current.update({
+          mode,
+          modeLabel: MODE_LABELS[mode],
+          timeLeftFormatted: formatSeconds(timeLeft),
+          totalDuration: getDuration(mode),
+          sessionsCompleted,
+          color: MODE_COLORS[mode],
+        });
+      } else if (!isRunning && liveActivityRef.current) {
+        liveActivityRef.current.end("immediate");
+        liveActivityRef.current = null;
+      }
+    } catch {
+      // Native module not available before prebuild
     }
   }, [isRunning, timeLeft, mode, sessionsCompleted, getDuration]);
 
@@ -120,9 +119,13 @@ export default function TimerScreen() {
     if (timeLeft === 0 && isRunning) {
       notification();
       // End current live activity before mode changes
-      if (liveActivityRef.current) {
-        liveActivityRef.current.end("immediate");
-        liveActivityRef.current = null;
+      try {
+        if (liveActivityRef.current) {
+          liveActivityRef.current.end("immediate");
+          liveActivityRef.current = null;
+        }
+      } catch {
+        // Native module not available before prebuild
       }
       completeSession(
         settings.workMinutes,
@@ -159,9 +162,13 @@ export default function TimerScreen() {
 
   const handleReset = useCallback(() => {
     impact();
-    if (liveActivityRef.current) {
-      liveActivityRef.current.end("immediate");
-      liveActivityRef.current = null;
+    try {
+      if (liveActivityRef.current) {
+        liveActivityRef.current.end("immediate");
+        liveActivityRef.current = null;
+      }
+    } catch {
+      // Native module not available before prebuild
     }
     reset(getDuration(mode));
   }, [impact, reset, getDuration, mode]);

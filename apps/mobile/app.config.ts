@@ -2,12 +2,13 @@ import { ConfigContext, ExpoConfig } from "expo/config";
 
 const APP_VARIANT = process.env.APP_VARIANT || "development";
 const IS_PRODUCTION = APP_VARIANT === "production";
+const IS_PREVIEW = APP_VARIANT === "preview";
 
-const BUNDLE_ID = IS_PRODUCTION
+const BUNDLE_ID = IS_PRODUCTION || IS_PREVIEW
   ? "com.mrdemonwolf.howlflow"
   : "com.mrdemonwolf.howlflow.dev";
 
-const APP_NAME = IS_PRODUCTION ? "HowlFlow" : "HowlFlow (Dev)";
+const APP_NAME = IS_PRODUCTION ? "HowlFlow" : IS_PREVIEW ? "HowlFlow" : "HowlFlow";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -15,7 +16,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   slug: "howlflow",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
+  icon: IS_PRODUCTION
+    ? "./assets/images/icon.png"
+    : IS_PREVIEW
+      ? "./assets/images-preview/icon.png"
+      : "./assets/images-dev/icon.png",
   scheme: "howlflow",
   userInterfaceStyle: "automatic",
   platforms: ["ios"],
@@ -24,7 +29,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     bundleIdentifier: BUNDLE_ID,
     buildNumber: "1",
-    icon: "./assets/AppIcon.icon",
+    icon: IS_PRODUCTION
+      ? "./assets/AppIcon.icon"
+      : IS_PREVIEW
+        ? "./assets/images-preview/icon.png"
+        : "./assets/images-dev/icon.png",
     config: {
       usesNonExemptEncryption: false,
     },
@@ -74,6 +83,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-widgets",
       {
+        bundleIdentifier: `${BUNDLE_ID}.widgets`,
         groupIdentifier: "group.com.mrdemonwolf.howlflow",
         frequentUpdates: true,
         widgets: [
