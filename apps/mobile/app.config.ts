@@ -93,12 +93,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             description: "Track your daily time block progress",
             supportedFamilies: ["systemSmall", "systemMedium"],
           },
-          {
-            name: "TimerActivity",
-            displayName: "Focus Timer",
-            description: "Live countdown for focus sessions",
-            supportedFamilies: [],
-          },
         ],
       },
     ],
