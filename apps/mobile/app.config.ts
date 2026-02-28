@@ -42,10 +42,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "HowlFlow uses haptic feedback to enhance your experience.",
       UIBackgroundModes: ["remote-notification"],
       NSSupportsLiveActivities: true,
-      ...(!IS_PRODUCTION && {
-        NSLocalNetworkUsageDescription:
-          "HowlFlow needs local network access to connect to the development server.",
-      }),
     },
     entitlements: {
       "com.apple.developer.icloud-container-identifiers": [
