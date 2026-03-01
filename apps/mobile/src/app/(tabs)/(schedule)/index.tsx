@@ -1,4 +1,5 @@
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
+import { Stack } from "expo-router/stack";
 import { useEffect, useMemo } from "react";
 import { FlatList, Text, View } from "react-native";
 
