@@ -2,10 +2,8 @@ import { useMemo } from "react";
 import { Text, View, ScrollView } from "react-native";
 
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { WOLF_QUOTES } from "@/lib/constants";
 import { todayKey } from "@/lib/dates";
 import { getLevel, getNextLevel, getLevelProgress } from "@/lib/xp";
-import { useSettingsStore } from "@/stores/settingsStore";
 import { useStatsStore } from "@/stores/statsStore";
 
 function StatCard({
@@ -30,7 +28,6 @@ function StatCard({
 }
 
 export default function WinsScreen() {
-  const wolfQuotesEnabled = useSettingsStore((s) => s.settings.wolfQuotesEnabled);
   const totalXP = useStatsStore((s) => s.totalXP);
   const currentStreak = useStatsStore((s) => s.currentStreak);
   const longestStreak = useStatsStore((s) => s.longestStreak);
@@ -49,10 +46,6 @@ export default function WinsScreen() {
   const level = getLevel(totalXP);
   const nextLevel = getNextLevel(totalXP);
   const levelProgress = getLevelProgress(totalXP);
-
-  // Pick a motivational quote based on day
-  const dayIndex = new Date().getDate() % WOLF_QUOTES.length;
-  const quote = WOLF_QUOTES[dayIndex];
 
   return (
     <ScrollView
@@ -152,14 +145,6 @@ export default function WinsScreen() {
         />
       </View>
 
-      {/* Wolf quote */}
-      {wolfQuotesEnabled && (
-        <View className="mx-4 mt-6 rounded-xl bg-bg-card p-4">
-          <Text className="text-center text-sm italic text-text-secondary">
-            "{quote}"
-          </Text>
-        </View>
-      )}
     </ScrollView>
   );
 }

@@ -15,12 +15,12 @@ export interface Settings {
 
   // Notifications
   notificationsEnabled: boolean;
+  timerAlertsEnabled: boolean;
   morningReminderTime: string; // HH:mm
 
   // Appearance
   themePreference: ThemePreference;
   hapticsEnabled: boolean;
-  wolfQuotesEnabled: boolean;
 
   // Data
   iCloudSyncEnabled: boolean;
@@ -37,10 +37,10 @@ export const DEFAULT_SETTINGS: Settings = {
   longBreakMinutes: 15,
   sessionsBeforeLongBreak: 4,
   notificationsEnabled: true,
+  timerAlertsEnabled: true,
   morningReminderTime: "07:30",
   themePreference: "dark",
   hapticsEnabled: true,
-  wolfQuotesEnabled: true,
   iCloudSyncEnabled: false,
   onboardingCompleted: false,
 };

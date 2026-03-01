@@ -2,7 +2,6 @@ import { Stack, router } from "expo-router";
 import { useEffect, useMemo } from "react";
 import { FlatList, Text, View } from "react-native";
 
-import { QuoteBar } from "@/components/schedule/QuoteBar";
 import { TimeBlockCard } from "@/components/schedule/TimeBlockCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -76,8 +75,6 @@ export default function ScheduleScreen() {
                 </Text>
               )}
             </View>
-
-            <QuoteBar />
           </View>
         }
         ListEmptyComponent={

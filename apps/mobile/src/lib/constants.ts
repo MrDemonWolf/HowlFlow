@@ -1,165 +1,136 @@
-import type { BlockTemplate, BlockType, UserSettings } from "@/types";
+import type { BlockTemplate, BlockType } from "@/types";
 
-export const DEFAULT_BLOCK_TEMPLATES: Omit<
-  BlockTemplate,
-  "id" | "createdAt" | "updatedAt"
->[] = [
-  {
-    label: "Morning Pack Ritual",
-    emoji: "\u2600\uFE0F",
-    type: "routine",
-    duration: 30,
-    time: "08:00",
-    defaultTasks: ["Brush teeth", "Shower", "Get dressed"],
-    sortOrder: 0,
-  },
-  {
-    label: "Hunt Planning",
-    emoji: "\uD83D\uDCCB",
-    type: "planning",
-    duration: 15,
-    time: "08:30",
-    defaultTasks: ["Review today's blocks", "Set top 3 priorities"],
-    sortOrder: 1,
-  },
-  {
-    label: "Deep Hunt",
-    emoji: "\uD83C\uDFAF",
-    type: "focus",
-    duration: 90,
-    time: "09:00",
-    defaultTasks: ["Work on main task"],
-    sortOrder: 2,
-  },
-  {
-    label: "Water Hole Break",
-    emoji: "\uD83D\uDCA7",
-    type: "break",
-    duration: 15,
-    time: "10:30",
-    defaultTasks: ["Stretch", "Drink water"],
-    sortOrder: 3,
-  },
-  {
-    label: "Second Hunt",
-    emoji: "\u26A1",
-    type: "focus",
-    duration: 60,
-    time: "10:45",
-    defaultTasks: ["Continue main task"],
-    sortOrder: 4,
-  },
-  {
-    label: "Pack Check-in",
-    emoji: "\uD83D\uDCAC",
-    type: "social",
-    duration: 15,
-    time: "11:45",
-    defaultTasks: ["Reply to messages", "Quick social check"],
-    sortOrder: 5,
-  },
-  {
-    label: "Feeding Time",
-    emoji: "\uD83C\uDF56",
-    type: "break",
-    duration: 45,
-    time: "12:00",
-    defaultTasks: ["Eat lunch", "Step outside"],
-    sortOrder: 6,
-  },
-  {
-    label: "Gentle Patrol",
-    emoji: "\uD83D\uDC3E",
-    type: "light",
-    duration: 45,
-    time: "12:45",
-    defaultTasks: ["Emails", "Messages", "Quick tasks"],
-    sortOrder: 7,
-  },
-  {
-    label: "Afternoon Hunt",
-    emoji: "\uD83D\uDD25",
-    type: "focus",
-    duration: 90,
-    time: "13:30",
-    defaultTasks: ["Afternoon focus work"],
-    sortOrder: 8,
-  },
-  {
-    label: "Den Rest",
-    emoji: "\uD83D\uDECB\uFE0F",
-    type: "break",
-    duration: 20,
-    time: "15:00",
-    defaultTasks: ["Relax", "Stretch"],
-    sortOrder: 9,
-  },
-  {
-    label: "Final Hunt",
-    emoji: "\uD83C\uDF19",
-    type: "focus",
-    duration: 60,
-    time: "15:20",
-    defaultTasks: ["Wrap up tasks"],
-    sortOrder: 10,
-  },
-  {
-    label: "Evening Howl",
-    emoji: "\uD83C\uDF05",
-    type: "routine",
-    duration: 30,
-    time: "16:20",
-    defaultTasks: ["Tidy space", "Prepare for tomorrow"],
-    sortOrder: 11,
-  },
-];
+// ─── Docs URL ───────────────────────────────────────────────────────────────
 
-export const WOLF_QUOTES = [
-  "The strength of the pack is the wolf, and the strength of the wolf is the pack. You've got this.",
-  "Every howl starts with a single breath. Take yours now.",
-  "Wolves don't lose sleep over the opinions of sheep. Stay on your trail.",
-  "A wolf doesn't perform for the circus. Do what matters to you.",
-  "Even the alpha rests between hunts. Breaks are part of the strategy.",
-  "The moon doesn't rush the night. Neither should you.",
-  "Trust your instincts. You know the way through the forest.",
-  "The hunt is long, but your pack is with you.",
-  "Paws forward. One step, one task, one block at a time.",
-  "You are not behind. You are exactly where your trail leads.",
-];
+const DOCS_PROD_URL = "https://mrdemonwolf.github.io/HowlFlow";
 
-export const COMPLETION_MESSAGES: Record<number, string> = {
-  100: "LEGENDARY WOLF STATUS! You completed every block. The whole forest heard that howl. Rest well tonight, champion.",
-  70: "Alpha wolf energy! You crushed most of your day. The pack is proud of this hunt.",
-  40: "Solid hunt today! Every completed block is a win. You showed up and that matters.",
-  1: "You showed up and started. That takes more strength than most realize. Every step counts.",
-  0: "The hunt hasn't started yet, and that's okay. Tomorrow's trail is waiting. Rest up, wolf.",
-};
+export const DOCS_URL = __DEV__ ? "http://localhost:3001" : DOCS_PROD_URL;
+
+// ─── Block Type Config ───────────────────────────────────────────────────────
 
 export const BLOCK_TYPE_CONFIG: Record<
   BlockType,
-  { bg: string; border: string; label: string }
+  { label: string; color: string; emoji: string }
 > = {
-  routine: { bg: "rgba(12,172,237,0.15)", border: "#0FACED", label: "Routine" },
-  focus: { bg: "rgba(252,129,74,0.15)", border: "#fc814a", label: "Focus" },
-  break: { bg: "rgba(104,211,145,0.15)", border: "#68d391", label: "Break" },
-  planning: {
-    bg: "rgba(183,148,244,0.15)",
-    border: "#b794f4",
-    label: "Planning",
-  },
-  social: { bg: "rgba(246,224,94,0.15)", border: "#f6e05e", label: "Social" },
-  light: { bg: "rgba(148,163,200,0.15)", border: "#94A3C8", label: "Light" },
+  morning: { label: "Morning", color: "#FBBF24", emoji: "🌅" },
+  focus: { label: "Focus", color: "#0FACED", emoji: "🎯" },
+  meals: { label: "Meals", color: "#34D399", emoji: "🍽️" },
+  movement: { label: "Movement", color: "#F87171", emoji: "💪" },
+  chill: { label: "Chill", color: "#7C5CFC", emoji: "😌" },
+  creative: { label: "Creative", color: "#F472B6", emoji: "🎨" },
+  social: { label: "Social", color: "#FB923C", emoji: "👥" },
+  admin: { label: "Admin", color: "#94A3B8", emoji: "📋" },
+  "wind-down": { label: "Wind Down", color: "#818CF8", emoji: "🌙" },
+  free: { label: "Free", color: "#64748B", emoji: "✨" },
 };
 
-export const DEFAULT_USER_SETTINGS: UserSettings = {
-  wakeUpTime: "08:00",
-  windDownTime: "22:00",
-  pomodoroWorkMinutes: 25,
-  pomodoroBreakMinutes: 5,
-  notifyMinutesBefore: 5,
-  morningReminderTime: "07:45",
-  notificationsEnabled: true,
-  hapticsEnabled: true,
-  iCloudSyncEnabled: false,
-  wolfQuotesEnabled: true,
-};
+// ─── Default Block Templates (12 Wolf-themed blocks) ─────────────────────────
+
+export const DEFAULT_TEMPLATES: BlockTemplate[] = [
+  {
+    id: "morning-howl",
+    label: "Morning Howl",
+    type: "morning",
+    durationMinutes: 30,
+    subtasks: ["Wash face", "Get dressed", "Make bed"],
+    emoji: "🌅",
+  },
+  {
+    id: "fuel-up",
+    label: "Fuel Up",
+    type: "meals",
+    durationMinutes: 30,
+    subtasks: ["Eat breakfast", "Take vitamins", "Hydrate"],
+    emoji: "🍽️",
+  },
+  {
+    id: "hunt-1",
+    label: "Hunt Block 1",
+    type: "focus",
+    durationMinutes: 90,
+    subtasks: ["Pick top task", "Set timer", "Deep focus"],
+    emoji: "🎯",
+  },
+  {
+    id: "quick-stretch",
+    label: "Quick Stretch",
+    type: "movement",
+    durationMinutes: 15,
+    subtasks: ["Stand up", "Move around", "Breathe"],
+    emoji: "💪",
+  },
+  {
+    id: "hunt-2",
+    label: "Hunt Block 2",
+    type: "focus",
+    durationMinutes: 90,
+    subtasks: ["Review progress", "Set timer", "Deep focus"],
+    emoji: "🎯",
+  },
+  {
+    id: "refuel",
+    label: "Refuel",
+    type: "meals",
+    durationMinutes: 45,
+    subtasks: ["Prepare lunch", "Eat mindfully", "Short walk"],
+    emoji: "🍽️",
+  },
+  {
+    id: "creative-den",
+    label: "Creative Den",
+    type: "creative",
+    durationMinutes: 60,
+    subtasks: ["Choose project", "Create freely", "Save work"],
+    emoji: "🎨",
+  },
+  {
+    id: "pack-time",
+    label: "Pack Time",
+    type: "social",
+    durationMinutes: 30,
+    subtasks: ["Reach out", "Connect", "Be present"],
+    emoji: "👥",
+  },
+  {
+    id: "hunt-3",
+    label: "Hunt Block 3",
+    type: "focus",
+    durationMinutes: 60,
+    subtasks: ["Final push task", "Set timer", "Wrap up"],
+    emoji: "🎯",
+  },
+  {
+    id: "territory-check",
+    label: "Territory Check",
+    type: "admin",
+    durationMinutes: 30,
+    subtasks: ["Check messages", "Plan tomorrow", "Tidy space"],
+    emoji: "📋",
+  },
+  {
+    id: "den-chill",
+    label: "Den Chill",
+    type: "chill",
+    durationMinutes: 60,
+    subtasks: ["Relax activity", "No screens", "Enjoy"],
+    emoji: "😌",
+  },
+  {
+    id: "moonlight-wind-down",
+    label: "Moonlight Wind Down",
+    type: "wind-down",
+    durationMinutes: 30,
+    subtasks: ["Brush teeth", "Dim lights", "Reflect on wins"],
+    emoji: "🌙",
+  },
+];
+
+// ─── XP Constants ────────────────────────────────────────────────────────────
+
+export const XP = {
+  BLOCK_COMPLETE: 10,
+  ON_TIME_BONUS: 5,
+  FOCUS_SESSION: 15,
+  SUBTASK: 2,
+  DAILY_100_PERCENT: 50,
+} as const;

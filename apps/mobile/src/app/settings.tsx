@@ -1,464 +1,242 @@
-import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Switch,
-  Alert,
-  Linking,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import SegmentedControl from "@react-native-segmented-control/segmented-control";
+import Constants from "expo-constants";
+import { useRouter } from "expo-router";
+import { useCallback } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
+
+import { SettingsRow } from "@/components/ui/SettingsRow";
+import { SettingsSection } from "@/components/ui/SettingsSection";
+import { SettingsToggleRow } from "@/components/ui/SettingsToggleRow";
+import { WolfEmblem } from "@/components/ui/WolfEmblem";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useSettingsStore } from "@/stores/settingsStore";
-import { useScheduleStore } from "@/stores/scheduleStore";
-import {
-  requestNotificationPermissions,
-  scheduleMorningReminder,
-} from "@/lib/notifications";
-import { tapFeedback, warningFeedback } from "@/lib/haptics";
-import { storage } from "@/lib/storage";
+import type { ThemePreference } from "@/types";
 
-// --- Sub-components ---
+const THEME_VALUES: ThemePreference[] = ["dark", "light", "auto"];
+const THEME_LABELS = ["Dark", "Light", "System"];
 
-function SettingsSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View className="mb-6">
-      <Text
-        className="text-text-muted text-xs uppercase tracking-wider px-5 mb-2"
-        style={{ fontFamily: "Montserrat_700Bold" }}
-      >
-        {title}
-      </Text>
-      <View className="bg-bg-card mx-5 rounded-xl border border-text-dim/10 overflow-hidden">
-        {children}
-      </View>
-    </View>
-  );
-}
-
-function SettingsRow({
-  label,
-  value,
-  onPress,
-  rightElement,
-}: {
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  rightElement?: React.ReactNode;
-}) {
-  const inner = (
-    <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-text-dim/10">
-      <Text
-        className="text-text-primary text-sm flex-1"
-        style={{ fontFamily: "Montserrat_400Regular" }}
-      >
-        {label}
-      </Text>
-      {rightElement ?? (
-        <Text
-          className="text-text-secondary text-sm"
-          style={{ fontFamily: "Roboto_400Regular" }}
-        >
-          {value}
-        </Text>
-      )}
-    </View>
-  );
-
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        accessibilityLabel={label}
-        accessibilityRole="button"
-      >
-        {inner}
-      </Pressable>
-    );
-  }
-  return inner;
-}
-
-function NumberStepper({
-  value,
-  onDecrease,
-  onIncrease,
-  min = 1,
-  max = 120,
-  suffix = "m",
-}: {
-  value: number;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  min?: number;
-  max?: number;
-  suffix?: string;
-}) {
-  return (
-    <View className="flex-row items-center gap-3">
-      <Pressable
-        onPress={() => {
-          if (value > min) {
-            tapFeedback();
-            onDecrease();
-          }
-        }}
-        className="w-8 h-8 rounded-lg bg-bg-surface items-center justify-center"
-        accessibilityLabel="Decrease"
-        accessibilityRole="button"
-      >
-        <Text className="text-text-primary text-lg">{"\u2212"}</Text>
-      </Pressable>
-      <Text
-        className="text-text-primary text-sm w-12 text-center"
-        style={{ fontFamily: "JetBrainsMono_400Regular" }}
-      >
-        {value}
-        {suffix}
-      </Text>
-      <Pressable
-        onPress={() => {
-          if (value < max) {
-            tapFeedback();
-            onIncrease();
-          }
-        }}
-        className="w-8 h-8 rounded-lg bg-bg-surface items-center justify-center"
-        accessibilityLabel="Increase"
-        accessibilityRole="button"
-      >
-        <Text className="text-text-primary text-lg">+</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function OptionPicker({
-  value,
-  options,
-  onSelect,
-}: {
-  value: number;
-  options: number[];
-  onSelect: (v: number) => void;
-}) {
-  return (
-    <View className="flex-row items-center gap-1">
-      {options.map((opt) => (
-        <Pressable
-          key={opt}
-          onPress={() => {
-            tapFeedback();
-            onSelect(opt);
-          }}
-          className={`px-3 py-1.5 rounded-lg ${value === opt ? "bg-wolf-blue/20" : "bg-transparent"}`}
-          accessibilityLabel={`${opt} minutes`}
-          accessibilityRole="button"
-        >
-          <Text
-            className={`text-xs ${value === opt ? "text-wolf-blue" : "text-text-muted"}`}
-            style={{ fontFamily: "JetBrainsMono_400Regular" }}
-          >
-            {opt}m
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-// --- Main Screen ---
+const appVersion = Constants.expoConfig?.version ?? "1.0.0";
 
 export default function SettingsScreen() {
-  const settings = useSettingsStore();
-  const templates = useScheduleStore((s) => s.templates);
-  const deleteTemplate = useScheduleStore((s) => s.deleteTemplate);
-  const resetTodaysBlocks = useScheduleStore((s) => s.resetTodaysBlocks);
+  const { settings, updateSettings, resetSettings } = useSettingsStore();
+  const { selection } = useHaptics();
+  const router = useRouter();
 
-  const handleToggleNotifications = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await requestNotificationPermissions();
-      settings.updateSetting("notificationsEnabled", granted);
-      if (granted) {
-        scheduleMorningReminder(settings.morningReminderTime);
-      }
-    } else {
-      settings.updateSetting("notificationsEnabled", false);
-    }
+  const cycleTime = useCallback(
+    (field: "wakeUpTime" | "windDownTime" | "morningReminderTime", current: string) => {
+      const [h, m] = current.split(":").map(Number);
+      const totalMins = (h * 60 + m + 30) % (24 * 60);
+      const newH = Math.floor(totalMins / 60);
+      const newM = totalMins % 60;
+      const newTime = `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
+      updateSettings({ [field]: newTime });
+      selection();
+    },
+    [updateSettings, selection]
+  );
+
+  const cycleMinutes = useCallback(
+    (
+      field: "workMinutes" | "breakMinutes" | "longBreakMinutes",
+      current: number,
+      step: number,
+      min: number,
+      max: number
+    ) => {
+      let next = current + step;
+      if (next > max) next = min;
+      updateSettings({ [field]: next });
+      selection();
+    },
+    [updateSettings, selection]
+  );
+
+  const formatTime = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, "0")} ${period}`;
   };
 
-  const handleResetToday = () => {
+  const handleRestartOnboarding = useCallback(() => {
     Alert.alert(
-      "Reset Today's Blocks",
-      "This will regenerate today's schedule from your templates. Current progress will be lost.",
+      "Restart Onboarding",
+      "This will take you back through the setup flow. Your data won't be lost.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Reset",
-          style: "destructive",
+          text: "Restart",
           onPress: () => {
-            warningFeedback();
-            resetTodaysBlocks();
+            updateSettings({ onboardingCompleted: false });
+            router.dismiss();
           },
         },
       ]
     );
-  };
+  }, [updateSettings, router]);
 
-  const handleClearData = () => {
-    Alert.alert(
-      "Clear All Data",
-      "This will erase all your blocks, stats, brain dumps, and settings. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear Everything",
-          style: "destructive",
-          onPress: () => {
-            warningFeedback();
-            storage.clearAll();
-            settings.resetSettings();
-            Alert.alert(
-              "Done",
-              "All data has been cleared. Restart the app for a fresh start."
-            );
-          },
-        },
-      ]
-    );
-  };
+  const handleReset = useCallback(() => {
+    Alert.alert("Reset Settings", "This will reset all settings to defaults.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reset",
+        style: "destructive",
+        onPress: () => resetSettings(),
+      },
+    ]);
+  }, [resetSettings]);
+
+  const themeIndex = THEME_VALUES.indexOf(settings.themePreference);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Settings",
-          headerStyle: { backgroundColor: "#091533" },
-          headerTintColor: "#E8F0FE",
-          headerTitleStyle: { fontFamily: "Cinzel_700Bold" },
-        }}
-      />
-      <SafeAreaView className="flex-1 bg-bg-dark" edges={[]}>
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="h-4" />
+    <ScrollView
+      className="flex-1 px-4"
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{ paddingTop: 16, paddingBottom: 48 }}
+    >
+      {/* Schedule */}
+      <SettingsSection
+        title="Schedule"
+        helperText="Your schedule helps calculate optimal deep work blocks."
+      >
+        <SettingsRow
+          label="Wake-up Time"
+          icon="sunrise.fill"
+          iconColor="#FBBF24"
+          value={formatTime(settings.wakeUpTime)}
+          valueColor="#FBBF24"
+          onPress={() => cycleTime("wakeUpTime", settings.wakeUpTime)}
+        />
+        <SettingsRow
+          label="Wind-down Time"
+          icon="moon.stars.fill"
+          iconColor="#7C5CFC"
+          value={formatTime(settings.windDownTime)}
+          valueColor="#7C5CFC"
+          onPress={() => cycleTime("windDownTime", settings.windDownTime)}
+          isLast
+        />
+      </SettingsSection>
 
-          {/* Timer */}
-          <SettingsSection title="Timer">
-            <SettingsRow
-              label="Work Duration"
-              rightElement={
-                <NumberStepper
-                  value={settings.pomodoroWorkMinutes}
-                  onDecrease={() =>
-                    settings.updateSetting(
-                      "pomodoroWorkMinutes",
-                      settings.pomodoroWorkMinutes - 5
-                    )
-                  }
-                  onIncrease={() =>
-                    settings.updateSetting(
-                      "pomodoroWorkMinutes",
-                      settings.pomodoroWorkMinutes + 5
-                    )
-                  }
-                  min={5}
-                  max={120}
-                />
-              }
-            />
-            <SettingsRow
-              label="Break Duration"
-              rightElement={
-                <NumberStepper
-                  value={settings.pomodoroBreakMinutes}
-                  onDecrease={() =>
-                    settings.updateSetting(
-                      "pomodoroBreakMinutes",
-                      settings.pomodoroBreakMinutes - 1
-                    )
-                  }
-                  onIncrease={() =>
-                    settings.updateSetting(
-                      "pomodoroBreakMinutes",
-                      settings.pomodoroBreakMinutes + 1
-                    )
-                  }
-                  min={1}
-                  max={30}
-                />
-              }
-            />
-          </SettingsSection>
+      {/* Timer Settings */}
+      <SettingsSection title="Timer Settings">
+        <SettingsRow
+          label="Work Duration"
+          icon="flame.fill"
+          iconColor="#0FACED"
+          value={`${settings.workMinutes} min`}
+          valueColor="#0FACED"
+          onPress={() => cycleMinutes("workMinutes", settings.workMinutes, 5, 15, 60)}
+        />
+        <SettingsRow
+          label="Short Break"
+          icon="cup.and.saucer.fill"
+          iconColor="#34D399"
+          value={`${settings.breakMinutes} min`}
+          valueColor="#34D399"
+          onPress={() => cycleMinutes("breakMinutes", settings.breakMinutes, 1, 3, 15)}
+        />
+        <SettingsRow
+          label="Long Break"
+          icon="leaf.fill"
+          iconColor="#34D399"
+          value={`${settings.longBreakMinutes} min`}
+          valueColor="#34D399"
+          onPress={() => cycleMinutes("longBreakMinutes", settings.longBreakMinutes, 5, 10, 30)}
+          isLast
+        />
+      </SettingsSection>
 
-          {/* Schedule */}
-          <SettingsSection title="Schedule">
-            <SettingsRow label="Wake Up Time" value={settings.wakeUpTime} />
-            <SettingsRow label="Wind Down Time" value={settings.windDownTime} />
-          </SettingsSection>
+      {/* Notifications */}
+      <SettingsSection title="Notifications">
+        <SettingsToggleRow
+          label="Enable Notifications"
+          icon="bell.fill"
+          iconColor="#0FACED"
+          value={settings.notificationsEnabled}
+          onValueChange={(v) => updateSettings({ notificationsEnabled: v })}
+        />
+        <SettingsToggleRow
+          label="Timer Alerts"
+          icon="timer"
+          iconColor="#FBBF24"
+          value={settings.timerAlertsEnabled}
+          onValueChange={(v) => updateSettings({ timerAlertsEnabled: v })}
+        />
+        <SettingsRow
+          label="Morning Reminder"
+          icon="alarm.fill"
+          iconColor="#FBBF24"
+          value={formatTime(settings.morningReminderTime)}
+          valueColor="#FBBF24"
+          onPress={() => cycleTime("morningReminderTime", settings.morningReminderTime)}
+          isLast
+        />
+      </SettingsSection>
 
-          {/* Notifications */}
-          <SettingsSection title="Notifications">
-            <SettingsRow
-              label="Enable Notifications"
-              rightElement={
-                <Switch
-                  value={settings.notificationsEnabled}
-                  onValueChange={handleToggleNotifications}
-                  trackColor={{ false: "#3A4A6B", true: "#0FACED" }}
-                  accessibilityLabel="Toggle notifications"
-                />
-              }
-            />
-            {settings.notificationsEnabled && (
-              <>
-                <SettingsRow
-                  label="Remind Before Block"
-                  rightElement={
-                    <OptionPicker
-                      value={settings.notifyMinutesBefore}
-                      options={[3, 5, 10]}
-                      onSelect={(v) =>
-                        settings.updateSetting("notifyMinutesBefore", v)
-                      }
-                    />
-                  }
-                />
-                <SettingsRow
-                  label="Morning Reminder"
-                  value={settings.morningReminderTime}
-                />
-              </>
-            )}
-          </SettingsSection>
+      {/* Appearance */}
+      <SettingsSection title="Appearance">
+        <SettingsRow
+          label="Theme"
+          icon="paintbrush.fill"
+          iconColor="#7C5CFC"
+        >
+          <SegmentedControl
+            values={THEME_LABELS}
+            selectedIndex={themeIndex >= 0 ? themeIndex : 0}
+            style={{ width: 180 }}
+            onChange={(event) => {
+              const idx = event.nativeEvent.selectedSegmentIndex;
+              updateSettings({ themePreference: THEME_VALUES[idx] });
+              selection();
+            }}
+          />
+        </SettingsRow>
+        <SettingsToggleRow
+          label="Haptics"
+          icon="hand.tap.fill"
+          iconColor="#0FACED"
+          value={settings.hapticsEnabled}
+          onValueChange={(v) => updateSettings({ hapticsEnabled: v })}
+          isLast
+        />
+      </SettingsSection>
 
-          {/* Appearance */}
-          <SettingsSection title="Appearance">
-            <SettingsRow
-              label="Haptic Feedback"
-              rightElement={
-                <Switch
-                  value={settings.hapticsEnabled}
-                  onValueChange={(v) =>
-                    settings.updateSetting("hapticsEnabled", v)
-                  }
-                  trackColor={{ false: "#3A4A6B", true: "#0FACED" }}
-                  accessibilityLabel="Toggle haptic feedback"
-                />
-              }
-            />
-            <SettingsRow
-              label="Wolf Quotes"
-              rightElement={
-                <Switch
-                  value={settings.wolfQuotesEnabled}
-                  onValueChange={(v) =>
-                    settings.updateSetting("wolfQuotesEnabled", v)
-                  }
-                  trackColor={{ false: "#3A4A6B", true: "#0FACED" }}
-                  accessibilityLabel="Toggle wolf quotes"
-                />
-              }
-            />
-          </SettingsSection>
+      {/* Data & Storage */}
+      <SettingsSection title="Data & Storage">
+        <SettingsToggleRow
+          label="iCloud Sync"
+          icon="icloud.fill"
+          iconColor="#0FACED"
+          value={settings.iCloudSyncEnabled}
+          onValueChange={(v) => updateSettings({ iCloudSyncEnabled: v })}
+        />
+        <SettingsRow
+          label="Restart Onboarding"
+          icon="arrow.counterclockwise"
+          iconColor="#FBBF24"
+          onPress={handleRestartOnboarding}
+        />
+        <SettingsRow
+          label="Reset All Settings"
+          icon="arrow.counterclockwise"
+          iconColor="#F87171"
+          destructive
+          onPress={handleReset}
+          isLast
+        />
+      </SettingsSection>
 
-          {/* Templates */}
-          <SettingsSection title="Schedule Templates">
-            {templates.map((t) => (
-              <SettingsRow
-                key={t.id}
-                label={`${t.emoji} ${t.label}`}
-                value={`${t.duration}m`}
-                onPress={() => {
-                  Alert.alert(
-                    t.label,
-                    `Type: ${t.type}\nDuration: ${t.duration}m\nTasks: ${t.defaultTasks.join(", ")}`,
-                    [
-                      { text: "OK" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: () => {
-                          warningFeedback();
-                          deleteTemplate(t.id);
-                        },
-                      },
-                    ]
-                  );
-                }}
-              />
-            ))}
-          </SettingsSection>
-
-          {/* Data */}
-          <SettingsSection title="Data">
-            <SettingsRow
-              label="Reset Today's Blocks"
-              onPress={handleResetToday}
-              rightElement={
-                <Text
-                  className="text-hunt-orange text-sm"
-                  style={{ fontFamily: "Roboto_400Regular" }}
-                >
-                  {"\u21BB"}
-                </Text>
-              }
-            />
-            <SettingsRow
-              label="Clear All Data"
-              onPress={handleClearData}
-              rightElement={
-                <Text
-                  className="text-red-400 text-sm"
-                  style={{ fontFamily: "Roboto_400Regular" }}
-                >
-                  {"\u26A0"}
-                </Text>
-              }
-            />
-          </SettingsSection>
-
-          {/* About */}
-          <SettingsSection title="About">
-            <SettingsRow label="Version" value="1.0.0" />
-            <SettingsRow
-              label="Privacy Policy"
-              onPress={() =>
-                Linking.openURL(
-                  "https://mrdemonwolf.github.io/howlflow/privacy"
-                )
-              }
-              rightElement={
-                <Text className="text-wolf-blue text-sm">{"\u2192"}</Text>
-              }
-            />
-            <SettingsRow
-              label="Terms of Service"
-              onPress={() =>
-                Linking.openURL(
-                  "https://mrdemonwolf.github.io/howlflow/terms"
-                )
-              }
-              rightElement={
-                <Text className="text-wolf-blue text-sm">{"\u2192"}</Text>
-              }
-            />
-            <SettingsRow
-              label="Made with care by"
-              value="MrDemonWolf, Inc."
-            />
-          </SettingsSection>
-
-          <View className="h-8" />
-        </ScrollView>
-      </SafeAreaView>
-    </>
+      {/* Footer */}
+      <View className="items-center pb-8 pt-4">
+        <WolfEmblem size={48} />
+        <Text className="mt-3 text-sm font-medium text-text-muted">
+          HowlFlow v{appVersion}
+        </Text>
+        <Text className="mt-1 text-xs text-text-muted">
+          Made with ♥ for ADHD Minds
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
