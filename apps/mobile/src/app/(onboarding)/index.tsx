@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Linking, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -352,14 +353,14 @@ export default function WelcomeScreen() {
           By continuing, you agree to our{" "}
           <Text
             className="text-sm font-medium text-wolf-blue"
-            onPress={() => Linking.openURL(`${DOCS_URL}/terms`)}
+            onPress={() => WebBrowser.openBrowserAsync(`${DOCS_URL}/terms`)}
           >
             Terms of Service
           </Text>
           {" "}and{" "}
           <Text
             className="text-sm font-medium text-wolf-blue"
-            onPress={() => Linking.openURL(`${DOCS_URL}/privacy`)}
+            onPress={() => WebBrowser.openBrowserAsync(`${DOCS_URL}/privacy`)}
           >
             Privacy Policy
           </Text>
