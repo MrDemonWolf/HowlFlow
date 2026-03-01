@@ -1,13 +1,20 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css";
-@import "fumadocs-ui/css/ui.css";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
-@theme {
-  --color-wolf-blue: #0FACED;
-  --color-wolf-deep: #091533;
-  --color-bg-dark: #091533;
-  --color-bg-card: #0F1F45;
-  --color-text-primary: #E8F0FE;
-  --color-text-secondary: #94A3C8;
+:root {
+  --color-fd-background: #091533;
+  --color-fd-foreground: #e2e8f0;
+  --color-fd-muted: #94a3b8;
+  --color-fd-muted-foreground: #64748b;
+  --color-fd-card: #0f1f45;
+  --color-fd-card-foreground: #e2e8f0;
+  --color-fd-border: #1e3a6e;
+  --color-fd-primary: #0faced;
+  --color-fd-primary-foreground: #091533;
+  --color-fd-accent: #0f1f45;
+  --color-fd-accent-foreground: #e2e8f0;
+  --color-fd-ring: #0faced;
 }

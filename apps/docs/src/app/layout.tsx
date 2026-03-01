@@ -1,17 +1,11 @@
-import type { Metadata } from "next";
 import "./global.css";
+import type { Metadata } from "next";
+import { RootProvider } from "fumadocs-ui/provider";
 
 export const metadata: Metadata = {
-  title: "HowlFlow — ADHD Daily Companion",
+  title: "HowlFlow — Your ADHD Companion",
   description:
-    "Your wolf-themed ADHD daily companion. Block your time, focus your hunt, dump your thoughts, celebrate your wins.",
-  icons: {
-    icon: [
-      { url: "/howlflow/icon.svg", type: "image/svg+xml" },
-      { url: "/howlflow/icon.png", type: "image/png" },
-    ],
-    apple: "/howlflow/icon.png",
-  },
+    "Structured like a pack, built for your brain. An iOS app for teens with ADHD.",
 };
 
 export default function RootLayout({
@@ -20,8 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-wolf-deep text-text-primary">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased">
+        <RootProvider>{children}</RootProvider>
+      </body>
     </html>
   );
 }

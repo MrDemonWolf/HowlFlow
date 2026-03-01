@@ -1,0 +1,65 @@
+---
+title: Architecture
+description: Understand the HowlFlow monorepo structure and technical decisions.
+---
+
+# Architecture
+
+## Monorepo Layout
+
+```
+HowlFlow/
+├── apps/
+│   ├── mobile/          # Expo SDK 55 / React Native app
+│   └── docs/            # Fumadocs / Next.js documentation site
+├── turbo.json           # Turborepo pipeline config
+├── pnpm-workspace.yaml  # pnpm workspace definition
+└── package.json         # Root scripts
+```
+
+## Mobile App Structure
+
+```
+apps/mobile/src/
+├── app/                 # Expo Router file-based routes
+│   ├── (tabs)/          # Tab navigator screens
+│   └── (onboarding)/    # Onboarding flow screens
+├── components/          # Reusable UI components
+│   ├── schedule/        # Schedule-specific components
+│   ├── ui/              # Generic UI primitives
+│   └── onboarding/      # Onboarding components
+├── stores/              # Zustand stores
+│   ├── scheduleStore    # Daily schedule & time blocks
+│   ├── timerStore       # Focus timer state
+│   ├── dumpStore        # Brain dump entries
+│   ├── statsStore       # XP, levels, streaks
+│   └── settingsStore    # User preferences
+├── hooks/               # Custom React hooks
+├── lib/                 # Utility functions
+└── modules/             # Native Swift modules (CloudKit)
+```
+
+## State Management
+
+All stores use **Zustand** with **MMKV** persistence for synchronous reads at module level:
+
+- Stores are defined in `src/stores/` with `create()` from Zustand
+- MMKV provides synchronous `getString`/`set` — no async loading spinners
+- Theme seed is read from MMKV at module level in `_layout.tsx` before first render
+
+## Theming
+
+HowlFlow uses a **dark-first** theme with NativeWind v5:
+
+- Colors are defined in the `@theme` block in `global.css`
+- NativeWind v5 compiles theme values statically at build time
+- `nativewindColorScheme.set()` from `react-native-css` controls `dark:` prefix activation
+- Runtime `:root` CSS variable overrides do not work in NativeWind v5
+
+## Native Modules
+
+CloudKit sync is implemented as a native Swift module via `expo-modules-core`:
+
+- Swift module definition in `src/modules/cloudkit/`
+- JavaScript bridge layer for React Native consumption
+- Handles iCloud sync for cross-device data persistence

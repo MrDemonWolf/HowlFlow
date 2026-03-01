@@ -1,0 +1,52 @@
+---
+title: Getting Started
+description: Set up the HowlFlow development environment.
+---
+
+# Getting Started
+
+## Prerequisites
+
+- **Node.js** 22+
+- **pnpm** 9.x
+- **Xcode** 16+ (for iOS simulator)
+- **iOS Simulator** or physical device
+
+## Clone & Install
+
+```bash
+git clone https://github.com/mrdemonwolf/HowlFlow.git
+cd HowlFlow
+pnpm install
+```
+
+## Run the Mobile App
+
+```bash
+pnpm run:ios
+```
+
+This runs `expo run:ios` through Turborepo, launching the app in the iOS Simulator.
+
+If you need a clean native build first:
+
+```bash
+pnpm prebuild:clean
+pnpm run:ios
+```
+
+## Run the Docs Site
+
+```bash
+pnpm dev:docs
+```
+
+Opens the documentation site at [http://localhost:3001](http://localhost:3001).
+
+## Type Check
+
+```bash
+pnpm typecheck
+```
+
+Runs TypeScript checking across all apps in the monorepo via Turborepo.

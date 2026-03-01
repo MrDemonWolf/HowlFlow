@@ -1,0 +1,46 @@
+---
+title: Features
+description: Explore the core features of HowlFlow.
+---
+
+# Features
+
+## Schedule Blocks
+
+HowlFlow divides your day into 12 wolf-themed time blocks, generated automatically from your wake-up time:
+
+- **Morning Howl** — Wake up and get moving
+- **Dawn Hunt** — First focused work session
+- **Pack Patrol** — Mid-morning tasks
+- And more through to **Moonlight Wind Down**
+
+Each block contains subtasks you can check off. The schedule adapts to your chosen wake time and adjusts block durations accordingly.
+
+## Focus Timer
+
+A Pomodoro-style timer with configurable work and break durations:
+
+- Visual progress ring showing time remaining
+- Haptic feedback on completion
+- Background notifications when the timer ends
+- Work/break cycle tracking
+
+The timer runs via `setInterval` in the screen component. When the app is backgrounded, a local notification is scheduled for the remaining time.
+
+## Brain Dump
+
+Quick-capture for thoughts before they disappear:
+
+- Tap to add a new thought instantly
+- No folders, no categories — just a running list
+- Swipe to delete when processed
+- Persisted locally via MMKV
+
+## XP & Level System
+
+Gamification to keep you motivated:
+
+- Earn XP for completing subtasks and focus sessions
+- Wolf rank progression from **Pup** to **Lone Wolf Legend**
+- Daily streak tracking with **grace days** — miss a day without losing your streak
+- Stats dashboard showing your progress over time
