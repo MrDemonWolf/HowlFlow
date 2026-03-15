@@ -1,0 +1,9 @@
+{
+  "extends": "@howlflow/config/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "jsxImportSource": "nativewind"
+  },
+  "include": ["src"]
+}
