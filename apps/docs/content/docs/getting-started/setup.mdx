@@ -1,0 +1,45 @@
+---
+title: Setup
+description: Get HowlFlow running locally for development
+---
+
+# Development Setup
+
+## Prerequisites
+
+- [Bun](https://bun.sh) (package manager)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+- iOS Simulator (macOS) or Android Emulator
+
+## Getting Started
+
+```bash
+# Clone the repo
+git clone https://github.com/mrdemonwolf/howlflow.git
+cd howlflow
+
+# Install dependencies
+bun install
+
+# Start the mobile app
+bun run dev:mobile
+
+# Start the docs site
+bun run dev --filter=docs
+```
+
+## Project Structure
+
+```
+howlflow/
+├── apps/
+│   ├── mobile/    # Expo app (React Native)
+│   └── docs/      # Fumadocs (Next.js)
+├── packages/
+│   ├── core/      # Shared types, theme, constants
+│   ├── db/        # SQLite schema and queries
+│   ├── ui/        # Shared UI components
+│   ├── config/    # Shared TypeScript/ESLint config
+│   └── env/       # Environment variable validation
+└── turbo.json     # Turborepo config
+```

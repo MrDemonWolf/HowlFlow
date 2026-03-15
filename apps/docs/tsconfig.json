@@ -1,0 +1,15 @@
+{
+  "extends": "@howlflow/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-env.d.ts"],
+  "exclude": ["node_modules"]
+}

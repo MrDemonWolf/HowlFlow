@@ -1,0 +1,31 @@
+---
+title: State Management
+description: How HowlFlow manages application state
+---
+
+# State Management
+
+HowlFlow uses a two-layer state approach:
+
+## Zustand + MMKV (UI State)
+
+Fast, synchronous access for UI state and preferences. Persisted to MMKV for instant hydration on app launch.
+
+- Onboarding state
+- User preferences
+- Active timer state
+- Navigation state
+
+## expo-sqlite (Data State)
+
+Structured, queryable storage for all app data. Accessed through typed query modules in `@howlflow/db`.
+
+- Tasks and focus sessions
+- Brain dumps
+- Routines and steps
+- Wolf state and achievements
+- Daily statistics
+
+## Why Two Layers?
+
+MMKV is faster for key-value reads (UI preferences, flags) while SQLite handles relational data with queries, aggregations, and migrations.

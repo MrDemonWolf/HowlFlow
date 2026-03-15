@@ -1,0 +1,30 @@
+---
+title: Architecture
+description: Technical architecture overview of HowlFlow
+---
+
+# Architecture
+
+HowlFlow is a Turborepo monorepo with a React Native mobile app and shared packages.
+
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Expo SDK 55 + Expo Router v7 |
+| Styling | NativeWind v5 (Tailwind for RN) |
+| State | Zustand + MMKV (persistent) |
+| Database | expo-sqlite (local-first) |
+| Navigation | File-based routing (Expo Router) |
+| Build | Turborepo + Bun |
+
+## Data Flow
+
+All data is local-first. The SQLite database stores tasks, focus sessions, routines, and wolf state. Zustand stores are hydrated from MMKV for fast access to UI state and preferences.
+
+## Package Dependencies
+
+```
+mobile → @howlflow/ui → @howlflow/core
+mobile → @howlflow/db → @howlflow/core
+```

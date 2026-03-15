@@ -1,0 +1,24 @@
+---
+title: Database Schema
+description: SQLite database structure for HowlFlow
+---
+
+# Database Schema
+
+HowlFlow uses expo-sqlite for local-first data storage. All data lives on-device.
+
+## Tables
+
+- **tasks** — User tasks with priority, status, and time tracking
+- **focus_sessions** — Pomodoro/deep work/sprint session records
+- **brain_dumps** — Quick thought captures for later processing
+- **routines** — Named routine definitions with schedules
+- **routine_steps** — Individual steps within a routine
+- **wolf_state** — Wolf companion level, mood, XP, and appearance
+- **daily_stats** — Aggregated daily statistics
+- **achievements** — Unlockable achievements with progress tracking
+- **user_preferences** — App settings and preferences
+
+## Migrations
+
+Schema changes are managed through a versioned migration system. See `packages/db/src/migrations.ts`.
