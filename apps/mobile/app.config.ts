@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/images/icon.png",
   scheme: "howlflow",
   userInterfaceStyle: "dark",
-  newArchEnabled: true,
+  ...(({ newArchEnabled: true }) as Partial<ExpoConfig>),
   ios: {
     supportsTablet: false,
     bundleIdentifier: "com.mrdemonwolf.howlflow",

@@ -1,5 +1,8 @@
 {
   "name": "@howlflow/config",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@types/node": "^25.5.0"
+  }
 }

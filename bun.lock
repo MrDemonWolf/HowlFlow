@@ -76,6 +76,9 @@
     "packages/config": {
       "name": "@howlflow/config",
       "version": "0.0.0",
+      "dependencies": {
+        "@types/node": "^25.5.0",
+      },
     },
     "packages/core": {
       "name": "@howlflow/core",

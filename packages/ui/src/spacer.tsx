@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { spacing } from "@howlflow/core/theme";
+import { spacing } from "@howlflow/core";
 
 type SpacerSize = "xs" | "sm" | "md" | "lg" | "xl";
 

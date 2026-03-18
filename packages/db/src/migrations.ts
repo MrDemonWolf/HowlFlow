@@ -10,9 +10,9 @@ export async function initDatabase(db: any): Promise<void> {
   `);
 
   // Check current version
-  const result = await db.getFirstAsync<{ value: string }>(
+  const result = (await db.getFirstAsync(
     "SELECT value FROM _db_meta WHERE key = 'version'"
-  );
+  )) as { value: string } | null;
   const currentVersion = result ? parseInt(result.value, 10) : 0;
 
   if (currentVersion < DB_VERSION) {
