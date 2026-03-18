@@ -7,6 +7,7 @@
       "packages/*"
     ],
     "catalog": {
+      "@types/node": "^25.5.0",
       "dotenv": "^17.2.2",
       "zod": "^4.1.13",
       "typescript": "^5"
@@ -19,7 +20,12 @@
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
     "dev:mobile": "turbo -F mobile dev",
-    "dev:docs": "turbo -F docs dev"
+    "dev:docs": "turbo -F docs dev",
+    "ios": "turbo -F mobile ios",
+    "ios:prod": "turbo -F mobile ios:prod",
+    "prebuild": "turbo -F mobile prebuild",
+    "prebuild:clean": "turbo -F mobile prebuild:clean",
+    "docs:build": "turbo -F docs build"
   },
   "dependencies": {
     "@howlflow/env": "workspace:*",

@@ -1,7 +1,13 @@
 import "../../global.css";
 
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
-import { useFonts } from "expo-font";
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  useFonts,
+} from "@expo-google-fonts/outfit";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -25,7 +31,10 @@ const HOWLFLOW_DARK_THEME = {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Outfit: require("../../assets/fonts/Outfit-Variable.ttf"),
+    Outfit: Outfit_400Regular,
+    "Outfit-Medium": Outfit_500Medium,
+    "Outfit-SemiBold": Outfit_600SemiBold,
+    "Outfit-Bold": Outfit_700Bold,
   });
 
   useEffect(() => {
