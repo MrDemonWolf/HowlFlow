@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@howlflow/config": "workspace:*",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

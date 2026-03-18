@@ -1,19 +1,23 @@
 import type { ExpoConfig, ConfigContext } from "expo/config";
 
+const IS_PROD = process.env.APP_VARIANT === "production";
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "HowlFlow",
+  name: IS_PROD ? "HowlFlow" : "HowlFlow (Dev)",
   slug: "howlflow",
   version: "0.1.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "howlflow",
   userInterfaceStyle: "dark",
+  // @ts-expect-error newArchEnabled is valid in Expo SDK 50+ but missing from @expo/config-types
   newArchEnabled: true,
   ios: {
     supportsTablet: false,
-    bundleIdentifier: "com.mrdemonwolf.howlflow",
-    appStoreUrl: undefined,
+    bundleIdentifier: IS_PROD
+      ? "com.mrdemonwolf.howlflow"
+      : "com.mrdemonwolf.howlflow.dev",
     config: {
       usesNonExemptEncryption: false,
     },
@@ -22,23 +26,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       MinimumOSVersion: "16.2",
     },
   },
-  android: {
-    adaptiveIcon: {
-      backgroundColor: "#0A0E1A",
-      foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
-      monochromeImage: "./assets/images/android-icon-monochrome.png",
-    },
-    package: "com.mrdemonwolf.howlflow",
-  },
   plugins: [
     "expo-router",
-    [
-      "expo-font",
-      {
-        fonts: ["./assets/fonts/Outfit-Variable.ttf"],
-      },
-    ],
+    "expo-font",
     "expo-haptics",
     [
       "expo-notifications",

@@ -5,12 +5,17 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "expo start --clear",
-    "android": "expo run:android",
+    "dev:prod": "APP_VARIANT=production expo start --clear",
     "ios": "expo run:ios",
+    "ios:prod": "APP_VARIANT=production expo run:ios",
     "prebuild": "expo prebuild",
+    "prebuild:clean": "expo prebuild --clean",
+    "prebuild:prod": "APP_VARIANT=production expo prebuild",
+    "lint": "expo lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.2",
     "@howlflow/core": "workspace:*",
     "@howlflow/env": "workspace:*",

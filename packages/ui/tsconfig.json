@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "jsx": "react-jsx",
-    "jsxImportSource": "nativewind"
+    "types": ["node", "nativewind/types"]
   },
   "include": ["src"]
 }
